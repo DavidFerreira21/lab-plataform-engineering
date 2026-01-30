@@ -1,0 +1,65 @@
+name: API DevSecOps Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'app/api/**'
+
+jobs:
+  security-scan:
+    name: Security Analysis (SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Run Bandit (SAST)
+        # Analisa o código Python em busca de vulnerabilidades
+        run: bandit -r app/api -ll
+
+  build-and-scan:
+    name: Build and SCA Scan
+    needs: security-scan # Só constrói se passar no SAST
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Pack CLI
+        uses: buildpacks/github-actions/setup-pack@v5.5.0
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build with Buildpacks
+        # Primeiro construímos localmente para escanear
+        run: |
+          pack build ${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest \
+            --path app/api \
+            --builder gcr.io/buildpacks/builder:v1
+
+      - name: Run Trivy (SCA & Image Scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest'
+          format: 'table'
+          exit-code: '1' # Faz a pipe falhar se encontrar vulnerabilidades críticas
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push Image
+        # Se o scan do Trivy passar, enviamos para o Docker Hub
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest
