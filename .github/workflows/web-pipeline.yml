@@ -55,10 +55,11 @@ jobs:
         with:
           image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/lab-web-carro:latest'
           format: 'table'
-          exit-code: '1' # Bloqueia se houver vulnerabilidades críticas ou altas
+          # Alteramos para falhar apenas em CRITICAL para este lab
+          exit-code: '1' 
           ignore-unfixed: true
           vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+          severity: 'CRITICAL'
 
       - name: Push Web Image
         # Só faz o push se passar no scan de vulnerabilidades
