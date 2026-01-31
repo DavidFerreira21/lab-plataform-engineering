@@ -9,3 +9,6 @@ app-template:
   ingress:
     enabled: true
     host: web.local
+  env:
+    - name: API_URL
+      value: "http://platform-api-svc:80/carros"
