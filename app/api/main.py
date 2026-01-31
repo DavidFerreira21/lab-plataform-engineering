@@ -51,3 +51,4 @@ def post_carro(carro: CarroSchema):
 def delete_carro(carro_id: str): # Recebe string pois o ID do Mongo é hash
     CarroRepo.deletar(carro_id)
     return {"status": "removido"}
+

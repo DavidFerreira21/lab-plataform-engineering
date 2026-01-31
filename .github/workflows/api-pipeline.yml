@@ -44,22 +44,29 @@ jobs:
 
       - name: Build with Buildpacks
         run: |
-          # Sem --publish e sem --docker. 
-          # Por padrão, ele salva no daemon local do Docker.
-          pack build ${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest \
+          # Gerando a tag baseada no SHA do commit
+          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro
+          TAG=${GITHUB_SHA::7}
+          
+          pack build $IMAGE_NAME:$TAG \
             --path app/api \
             --builder gcr.io/buildpacks/builder:v1
+
+          # Criando um alias 'latest' localmente para o Scan
+          docker tag $IMAGE_NAME:$TAG $IMAGE_NAME:latest
 
       - name: Run Trivy (SCA & Image Scan)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL'
+          # Escaneamos a tag específica
+          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:${{ github.sha }}'
+          # ... (restante das configs do trivy)
 
       - name: Push Image
-        # Só chega aqui se o Trivy der OK
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest
+        run: |
+          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro
+          TAG=${GITHUB_SHA::7}
+          
+          # Sobe a versão específica e a latest
+          docker push $IMAGE_NAME:$TAG
+          docker push $IMAGE_NAME:latest

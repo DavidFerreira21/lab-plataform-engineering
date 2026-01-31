@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'app/web/**'  # Ativa apenas se houver mudanças na pasta web
+      - 'app/web/**'
 
 jobs:
   security-sast:
@@ -23,7 +23,7 @@ jobs:
         run: pip install bandit
 
       - name: Run Bandit (SAST)
-        # Analisa o código Flask em busca de falhas de segurança
+        # O Bandit vai analisar o código Flask
         run: bandit -r app/web -ll
 
   build-and-sca:
@@ -45,22 +45,36 @@ jobs:
 
       - name: Build with Buildpacks
         run: |
-          # Sem --publish e sem --docker. 
-          # Por padrão, ele salva no daemon local do Docker.
-          pack build ${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest \
-            --path app/api \
+          # Define o nome da imagem e a tag (SHA curto)
+          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/lab-web-carro
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          
+          echo "Building version: $SHORT_SHA"
+          
+          # Build local sem --publish para o Trivy poder escanear
+          pack build $IMAGE_NAME:$SHORT_SHA \
+            --path app/web \
             --builder gcr.io/buildpacks/builder:v1
+
+          # Cria a tag latest localmente para conveniência
+          docker tag $IMAGE_NAME:$SHORT_SHA $IMAGE_NAME:latest
 
       - name: Run Trivy (SCA & Image Scan)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest'
+          # Escaneamos a imagem recém-criada (usando o SHA curto)
+          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/lab-web-carro:latest'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL'
 
-      - name: Push Image
-        # Só chega aqui se o Trivy der OK
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest
+      - name: Push Web Image
+        run: |
+          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/lab-web-carro
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          
+          # Envia ambas as tags para o Docker Hub
+          docker push $IMAGE_NAME:$SHORT_SHA
+          docker push $IMAGE_NAME:latest
