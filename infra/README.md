@@ -7,7 +7,7 @@ Esta pasta contém a camada de infra do lab: **GitOps com ArgoCD**, **charts Hel
 ```text
 infra/
 ├── argo/
-│   ├── application.yaml      # Application com múltiplas sources (API e Web)
+│   ├── application.yaml.tmpl # Template do Application (parametrizado por REPO_URL)
 │   └── ingress.yaml          # Ingress do ArgoCD
 └── charts/
     └── app-template/         # Chart base compartilhado pelas apps
@@ -29,11 +29,12 @@ flowchart LR
 ## ArgoCD (GitOps)
 
 ### Application
-Arquivo: `infra/argo/application.yaml`
+Arquivo: `infra/argo/application.yaml.tmpl`
 - Usa `sources` (plural) para API e Web
 - Cada source possui `helm.releaseName` para evitar conflito de recursos
   - `platform-api` → Service `platform-api-svc`
   - `platform-web` → Service `platform-web-svc`
+  - `REPO_URL` define o repositório Git usado pelo ArgoCD
 
 ### Ingress do ArgoCD
 Arquivo: `infra/argo/ingress.yaml`
@@ -79,7 +80,7 @@ Comandos úteis:
 - `make cluster` cria o cluster Kind (usa `kind-config.yaml`)
 - `make install-nginx` instala o Nginx Ingress
 - `make install-argo` instala o ArgoCD
-- `make bootstrap-argo` aplica Application e Ingress do ArgoCD
+- `make bootstrap-argo` aplica Application e Ingress do ArgoCD (usa `REPO_URL`)
 - `make status` mostra status do cluster
 - `make down` remove o cluster
 
@@ -87,3 +88,4 @@ Comandos úteis:
 - O Kind expõe portas 80/443 para o host via `kind-config.yaml`.
 - Para acessar o ArgoCD localmente, use `argocd.local` (ajuste seu `/etc/hosts`).
 - Para o Web, use o host definido em `app/web/values.yaml` (ex.: `web.local`).
+- Para fork, rode: `REPO_URL=https://github.com/<seu_usuario>/<seu_repo>.git make bootstrap-argo`

@@ -52,7 +52,7 @@ GitHub -> ArgoCD -> Helm -> Kubernetes
 
 ## CI/CD (resumo)
 - **CI**: pipelines por pasta (`app/api/**` e `app/web/**`) com Bandit, Trivy e Buildpacks
-- **CD**: ArgoCD aplica `infra/argo/application.yaml` e sincroniza os Helm charts
+- **CD**: ArgoCD aplica `infra/argo/application.yaml.tmpl` (via `make bootstrap-argo`) e sincroniza os Helm charts
 
 ## Conceitos de segurança (explicações rápidas)
 - **SAST (Static Application Security Testing)**: análise do código-fonte sem executar a aplicação; identifica padrões inseguros cedo no ciclo de desenvolvimento.
