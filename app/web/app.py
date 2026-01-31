@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect
 import requests
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='app_templates')
 
 # Configuração via variáveis de ambiente (Padrão de Plataforma)
 API_URL = os.getenv("API_URL", "http://127.0.0.1:8000/carros")

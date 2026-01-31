@@ -4,7 +4,8 @@ app-template:
     repository: david210/lab-web-carro # Imagem do Front-end
     tag: latest
   service:
-    port: 80 # A porta que o seu Front-end escuta
+    port: 80        # Porta que o Ingress/Cluster usa
+    targetPort: 5000 # Porta que o FLASK está ouvindo
   ingress:
     enabled: true
     host: web.local
