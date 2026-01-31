@@ -63,6 +63,16 @@ cluster: ## Cria o cluster Kind se não existir
 	else \
 		echo "⚠️ Cluster '$(CLUSTER_NAME)' já existe."; \
 	fi
+
+
+install-nginx: ## Instala e configura o Nginx Ingress para Kind
+	@echo "🌐 Instalando Nginx Ingress Controller..."
+	@kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+	@echo "🛠️ Aplicando patches para rodar no Kind..."
+	@kubectl -n ingress-nginx patch deploy ingress-nginx-controller --type='json' -p='[{"op":"add","path":"/spec/template/spec/nodeSelector","value":{"ingress-ready":"true","kubernetes.io/os":"linux"}}]'
+	@kubectl -n ingress-nginx patch deploy ingress-nginx-controller --type='json' -p='[{"op":"add","path":"/spec/template/spec/containers/0/ports/0/hostPort","value":80},{"op":"add","path":"/spec/template/spec/containers/0/ports/1/hostPort","value":443}]'
+	@echo "⏳ Aguardando Nginx ficar pronto (isso pode levar uns minutos)..."
+	@kubectl wait --namespace ingress-nginx --for=condition=Ready pod --selector=app.kubernetes.io/component=controller --timeout=180s
 # ==========================================
 # GITOPS (ARGO CD)
 # ==========================================
