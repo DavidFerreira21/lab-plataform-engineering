@@ -38,4 +38,4 @@ class CarroSchema(BaseModel):
 
     class Config:
         from_attributes = True # Útil para converter de SQL para Pydantic
-        
+    
