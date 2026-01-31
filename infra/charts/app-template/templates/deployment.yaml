@@ -20,4 +20,4 @@ spec:
 {{ toYaml .Values.env | indent 12 }}
 {{- end }}
           ports:
-            - containerPort: {{ .Values.service.port }}
+            - containerPort: {{ .Values.service.targetPort | default .Values.service.port }}

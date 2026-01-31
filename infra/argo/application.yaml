@@ -10,12 +10,14 @@ spec:
       targetRevision: HEAD
       path: app/api
       helm:
+        releaseName: platform-api
         valueFiles:
           - values.yaml
     - repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
       targetRevision: HEAD
       path: app/web
       helm:
+        releaseName: platform-web
         valueFiles:
           - values.yaml
   destination:

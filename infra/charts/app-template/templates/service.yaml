@@ -8,5 +8,5 @@ spec:
   ports:
     - protocol: TCP
       port: 80              # Porta que outros serviços usarão para falar com ele
-      targetPort: {{ .Values.service.port | default 8080 }} # Porta real do container
+      targetPort: {{ .Values.service.targetPort | default .Values.service.port | default 8080 }} # Porta real do container
   type: ClusterIP           # Padrão para comunicação interna no Kubernetes

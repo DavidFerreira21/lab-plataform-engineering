@@ -1,5 +1,5 @@
 app-template:
-  replicaCount: 2
+  replicaCount: 1
   image:
     repository: david210/lab-api-carro
     tag: latest
