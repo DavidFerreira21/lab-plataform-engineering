@@ -6,14 +6,14 @@ metadata:
 spec:
   project: default
   sources: # Mudamos para 'sources' (plural)
-    - repoURL: '${REPO_URL}'
+    - repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
       targetRevision: HEAD
       path: app/api
       helm:
         releaseName: platform-api
         valueFiles:
           - values.yaml
-    - repoURL: '${REPO_URL}'
+    - repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
       targetRevision: HEAD
       path: app/web
       helm:

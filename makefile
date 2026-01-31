@@ -4,7 +4,6 @@
 CLUSTER_NAME=dev
 NAMESPACE_ARGO=argocd
 BIN_DIR=/usr/local/bin
-REPO_URL?=https://github.com/SEU_USUARIO/SEU_REPO.git
 
 .PHONY: all setup cluster install-nginx install-argo bootstrap-argo status down help
 
@@ -86,7 +85,7 @@ install-argo: ## Instalação do ArgoCD
 
 bootstrap-argo: ## Conecta o Argo ao Monorepo
 	@echo "🏗️ Aplicando configurações de GitOps..."
-	@REPO_URL=$(REPO_URL) envsubst < infra/argo/application.yaml.tmpl | kubectl apply -f -
+	@kubectl apply -f infra/argo/application.yaml
 	@kubectl apply -f infra/argo/ingress.yaml || echo "⚠️ Ingress do Argo não aplicado."
 	@echo "🔑 Senha Admin ArgoCD:"
 	@kubectl -n $(NAMESPACE_ARGO) get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
