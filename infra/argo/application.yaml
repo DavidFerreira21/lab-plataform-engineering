@@ -5,13 +5,19 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
-    targetRevision: HEAD
-    path: app/api # O Argo entra aqui e procura o Chart.yaml
-    helm:
-      valueFiles:
-        - values.yaml
+  sources: # Mudamos para 'sources' (plural)
+    - repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
+      targetRevision: HEAD
+      path: app/api
+      helm:
+        valueFiles:
+          - values.yaml
+    - repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
+      targetRevision: HEAD
+      path: app/web
+      helm:
+        valueFiles:
+          - values.yaml
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: app
