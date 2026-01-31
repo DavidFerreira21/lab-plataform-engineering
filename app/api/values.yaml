@@ -5,3 +5,8 @@ app-template:
     tag: latest
   service:
     port: 80
+  env:
+    - name: API_URL
+      value: "http://api-carro-svc:80/carros"
+    - name: FLASK_DEBUG
+      value: "true" # Corrigido: name e value em linhas separadas
