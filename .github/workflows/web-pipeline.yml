@@ -43,24 +43,24 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build with Buildpacks
-        # Constrói a imagem do front-end
+      - name: Build with Buildpacks (Export to Docker)
         run: |
+          # Remova o --publish daqui por enquanto, vamos publicar só se o scan passar
           pack build ${{ secrets.DOCKERHUB_USERNAME }}/lab-web-carro:latest \
             --path app/web \
-            --builder gcr.io/buildpacks/builder:v1
-
-      - name: Run Trivy (SCA & Image Scan)
+            --builder gcr.io/buildpacks/builder:v1 \
+            --docker # Isso garante que a imagem vá para o daemon do Docker local
+            
+      - name: Run Trivy (Local Scan)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/lab-web-carro:latest'
           format: 'table'
-          # Alteramos para falhar apenas em CRITICAL para este lab
-          exit-code: '1' 
+          exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL'
 
       - name: Push Web Image
-        # Só faz o push se passar no scan de vulnerabilidades
+        # Agora sim, se o scan passou, enviamos para o Docker Hub
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/lab-web-carro:latest

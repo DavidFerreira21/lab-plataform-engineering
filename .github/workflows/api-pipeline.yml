@@ -7,8 +7,8 @@ on:
       - 'app/api/**'
 
 jobs:
-  security-scan:
-    name: Security Analysis (SAST)
+  security-sast:
+    name: Security Analysis (SAST) - API
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -23,12 +23,11 @@ jobs:
         run: pip install bandit
 
       - name: Run Bandit (SAST)
-        # Analisa o código Python em busca de vulnerabilidades
         run: bandit -r app/api -ll
 
-  build-and-scan:
-    name: Build and SCA Scan
-    needs: security-scan # Só constrói se passar no SAST
+  build-and-sca:
+    name: Build and SCA Scan - API
+    needs: security-sast
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -43,23 +42,24 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build with Buildpacks
-        # Primeiro construímos localmente para escanear
+      - name: Build with Buildpacks (Export to Docker)
         run: |
+          # Usamos --docker para o Trivy conseguir ler a imagem localmente
           pack build ${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest \
             --path app/api \
-            --builder gcr.io/buildpacks/builder:v1
+            --builder gcr.io/buildpacks/builder:v1 \
+            --docker
 
       - name: Run Trivy (SCA & Image Scan)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/lab-web-carro:latest'
+          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest'
           format: 'table'
-          # falhar apenas se houver vulnerabilidades CRITICAL
-          exit-code: '1' 
+          exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL'
-      - name: Push Image
-        # Se o scan do Trivy passar, enviamos para o Docker Hub
+
+      - name: Push API Image
+        # Só faz o push se o Trivy não encontrar vulnerabilidades CRITICAL
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest
