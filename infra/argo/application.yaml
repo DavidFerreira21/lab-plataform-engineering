@@ -8,13 +8,13 @@ spec:
   source:
     repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
     targetRevision: HEAD
-    path: app/api
-    helm: # Adicione este bloco para forçar o motor do Helm
+    path: app/api # O Argo entra aqui e procura o Chart.yaml
+    helm:
       valueFiles:
         - values.yaml
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: app # Onde seus apps vão morar
+    namespace: app
   syncPolicy:
     automated:
       prune: true

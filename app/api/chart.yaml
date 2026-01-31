@@ -4,5 +4,4 @@ version: 1.0.0
 dependencies:
   - name: app-template
     version: "0.1.0"
-    repository: "file://../../infra/charts/app-template" # Caminho relativo no monorepo
-    
+    repository: "file://../../infra/charts/app-template/"

@@ -1,6 +1,6 @@
 dependencies:
 - name: app-template
-  repository: file://../../infra/charts/app-template
+  repository: file://../../infra/charts/app-template/
   version: 0.1.0
-digest: sha256:aea25e72e7da206c656a1f38104ad36ff6594055b5d9c5b29b56daff78f54083
-generated: "2026-01-31T17:36:42.670869223-03:00"
+digest: sha256:9abaca196d6ecbf2003585b6da002c7d1f5d38125333d8dc9967568744994fe0
+generated: "2026-01-31T17:51:18.221978076-03:00"
