@@ -1,17 +1,51 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from database import USE_MONGO, SessionLocal, CarroSQL, collection, CarroSchema
 from bson import ObjectId
 import logging
 import sys
+import json
+import time
 
 app = FastAPI()
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    format="%(message)s",
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger("api")
+
+def log_json(level, message, **fields):
+    payload = {"level": level, "message": message, **fields}
+    logger.log(level, json.dumps(payload, ensure_ascii=True))
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.perf_counter()
+    try:
+        response = await call_next(request)
+        duration_ms = round((time.perf_counter() - start) * 1000, 2)
+        log_json(
+            logging.INFO,
+            "request",
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code,
+            duration_ms=duration_ms,
+        )
+        return response
+    except Exception as exc:
+        duration_ms = round((time.perf_counter() - start) * 1000, 2)
+        log_json(
+            logging.ERROR,
+            "request_error",
+            method=request.method,
+            path=request.url.path,
+            status_code=500,
+            duration_ms=duration_ms,
+            error=str(exc),
+        )
+        raise
 
 class CarroRepo:
     @staticmethod
@@ -49,17 +83,14 @@ class CarroRepo:
 
 @app.get("/carros")
 def get_carros():
-    logger.info("GET /carros")
     return CarroRepo.listar()
 
 @app.post("/carros")
 def post_carro(carro: CarroSchema):
-    logger.info("POST /carros")
     CarroRepo.salvar(carro.dict())
     return {"status": "ok"}
 
 @app.delete("/carros/{carro_id}")
 def delete_carro(carro_id: str): # Recebe string pois o ID do Mongo é hash
-    logger.info("DELETE /carros/%s", carro_id)
     CarroRepo.deletar(carro_id)
     return {"status": "removido"}
