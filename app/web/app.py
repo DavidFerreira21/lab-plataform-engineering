@@ -43,4 +43,3 @@ if __name__ == '__main__':
     # O host 0.0.0.0 é necessário para o Docker/K8s, 
     # usamos # nosec B104 para informar ao Bandit que isso é intencional.
     app.run(host='0.0.0.0', port=5000, debug=DEBUG_MODE)  # nosec B104
-    
