@@ -42,13 +42,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build with Buildpacks (Export to Docker)
+      - name: Build with Buildpacks
         run: |
-          # Usamos --docker para o Trivy conseguir ler a imagem localmente
+          # Sem --publish e sem --docker. 
+          # Por padrão, ele salva no daemon local do Docker.
           pack build ${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest \
             --path app/api \
-            --builder gcr.io/buildpacks/builder:v1 \
-            --docker
+            --builder gcr.io/buildpacks/builder:v1
 
       - name: Run Trivy (SCA & Image Scan)
         uses: aquasecurity/trivy-action@master
@@ -60,6 +60,6 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL'
 
-      - name: Push API Image
-        # Só faz o push se o Trivy não encontrar vulnerabilidades CRITICAL
+      - name: Push Image
+        # Só chega aqui se o Trivy der OK
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro:latest
