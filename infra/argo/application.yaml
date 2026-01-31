@@ -8,9 +8,10 @@ spec:
   source:
     repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
     targetRevision: HEAD
-    path: app # Ele vai olhar a pasta pai 'app'
-    directory:
-      recurse: true # Isso faz o Argo buscar api/ e web/ automaticamente
+    path: app/api
+    helm: # Adicione este bloco para forçar o motor do Helm
+      valueFiles:
+        - values.yaml
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: app # Onde seus apps vão morar
