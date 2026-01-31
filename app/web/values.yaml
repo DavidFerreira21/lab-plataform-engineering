@@ -1,0 +1,7 @@
+app-template:
+  replicaCount: 1
+  image:
+    repository: david210/lab-web-carro # Imagem do Front-end
+    tag: latest
+  service:
+    port: 80 # A porta que o seu Front-end escuta

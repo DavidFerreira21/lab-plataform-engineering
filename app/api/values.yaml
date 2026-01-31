@@ -1,0 +1,7 @@
+app-template:
+  replicaCount: 2
+  image:
+    repository: david210/lab-api-carro
+    tag: latest
+  service:
+    port: 80

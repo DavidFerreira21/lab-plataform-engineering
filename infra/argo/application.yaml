@@ -1,20 +1,22 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: lab-monorepo-apps
+  name: platform-apps
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
     targetRevision: HEAD
-    path: app # O Argo vai olhar api e web simultaneamente
+    path: app # Ele vai olhar a pasta pai 'app'
     directory:
-      recurse: true # Importante para ele ler as subpastas
+      recurse: true # Isso faz o Argo buscar api/ e web/ automaticamente
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: app
+    namespace: app # Onde seus apps vão morar
   syncPolicy:
-    automated: { prune: true, selfHeal: true }
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true

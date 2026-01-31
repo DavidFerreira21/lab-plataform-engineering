@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: '{{ .Release.Name }}-svc'
+spec:
+  selector:
+    app: {{ .Release.Name }}
+  ports:
+    - protocol: TCP
+      port: 80              # Porta que outros serviços usarão para falar com ele
+      targetPort: {{ .Values.service.port | default 8080 }} # Porta real do container
+  type: ClusterIP           # Padrão para comunicação interna no Kubernetes

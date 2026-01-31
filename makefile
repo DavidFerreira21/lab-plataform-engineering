@@ -18,47 +18,51 @@ help: ## Ajuda
 # ==========================================
 # INSTALAÇÃO DE DEPENDÊNCIAS
 # ==========================================
-setup: ## Verifica e instala todas as dependências
+setup: ## Verifica e instala Docker, Kubectl, Kind e Helm
 	@echo "🔍 Verificando ferramentas..."
-	
-	@if ! command -v docker &> /dev/null; then \
-		echo "🐳 Instalando Docker..."; \
+	@# Docker
+	@if ! command -v docker >/dev/null 2>&1; then \
+		echo "🐳 Docker não encontrado. Instalando..."; \
 		sudo apt-get update && sudo apt-get install -y docker.io; \
 		sudo usermod -aG docker ${USER}; \
+	else \
+		echo "✅ Docker já está instalado"; \
 	fi
-
-	@if ! command -v kubectl &> /dev/null; then \
-		echo "☸️ Instalando Kubectl..."; \
+	@# Kubectl
+	@if ! command -v kubectl >/dev/null 2>&1; then \
+		echo "☸️ Kubectl não encontrado. Instalando..."; \
 		curl -LO "https://dl.k8s.io/release/$$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"; \
 		chmod +x ./kubectl && sudo mv ./kubectl $(BIN_DIR)/kubectl; \
+	else \
+		echo "✅ Kubectl já está instalado"; \
 	fi
-
-	@if ! command -v kind &> /dev/null; then \
-		echo "🏗️ Instalando Kind..."; \
+	@# Kind
+	@if ! command -v kind >/dev/null 2>&1; then \
+		echo "🏗️ Kind não encontrado. Instalando..."; \
 		curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64; \
 		chmod +x ./kind && sudo mv ./kind $(BIN_DIR)/kind; \
+	else \
+		echo "✅ Kind já está instalado"; \
 	fi
-
-	@if ! command -v helm &> /dev/null; then \
-		echo "⛵ Instalando Helm..."; \
+	@# Helm
+	@if ! command -v helm >/dev/null 2>&1; then \
+		echo "⛵ Helm não encontrado. Instalando..."; \
 		curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash; \
+	else \
+		echo "✅ Helm já está instalado"; \
 	fi
-	@echo "✅ Dependências OK"
 
 # ==========================================
 # PROVISIONAMENTO DO CLUSTER
 # ==========================================
-cluster: ## Cria o cluster Kind
-	@echo "🏗️ Criando cluster Kind..."
-	@kind create cluster --name $(CLUSTER_NAME) --config kind-config.yaml || echo "⚠️ Cluster já existe."
-
-install-nginx: ## Ingress Nginx para Kind
-	@echo "🌐 Instalando Ingress Nginx..."
-	@kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-	@kubectl -n ingress-nginx patch deploy ingress-nginx-controller --type='json' -p='[{"op":"add","path":"/spec/template/spec/nodeSelector","value":{"ingress-ready":"true","kubernetes.io/os":"linux"}}]'
-	@kubectl -n ingress-nginx patch deploy ingress-nginx-controller --type='json' -p='[{"op":"add","path":"/spec/template/spec/containers/0/ports/0/hostPort","value":80},{"op":"add","path":"/spec/template/spec/containers/0/ports/1/hostPort","value":443}]'
-	@kubectl wait --namespace ingress-nginx --for=condition=Ready pod --selector=app.kubernetes.io/component=controller --timeout=180s
-
+cluster: ## Cria o cluster Kind se não existir
+	@echo "🏗️ Verificando cluster Kind..."
+	@if ! kind get clusters | grep -q "^$(CLUSTER_NAME)$$"; then \
+		if [ ! -f kind-config.yaml ]; then echo "❌ Erro: kind-config.yaml não encontrado!"; exit 1; fi; \
+		kind create cluster --name $(CLUSTER_NAME) --config kind-config.yaml; \
+	else \
+		echo "⚠️ Cluster '$(CLUSTER_NAME)' já existe."; \
+	fi
 # ==========================================
 # GITOPS (ARGO CD)
 # ==========================================

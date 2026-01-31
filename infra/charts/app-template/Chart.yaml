@@ -1,0 +1,5 @@
+apiVersion: v2
+name: app-template
+description: Molde genérico para aplicações da plataforma
+type: application
+version: 0.1.0
