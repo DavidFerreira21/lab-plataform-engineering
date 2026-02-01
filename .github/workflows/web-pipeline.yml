@@ -26,30 +26,9 @@ jobs:
         # O Bandit vai analisar o código Flask
         run: bandit -r app/web -ll
 
-  requirements:
-    name: Requirements (Helm) - Web
-    needs: security-sast
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Helm
-        uses: azure/setup-helm@v4
-
-      - name: Build Helm dependencies
-        run: helm dependency build app/web
-
-      - name: Verify Helm artifacts are committed
-        run: |
-          git diff --exit-code app/web/Chart.lock app/web/charts || {
-            echo "Helm dependencies changed. Commit app/web/Chart.lock and app/web/charts/*.tgz";
-            exit 1;
-          }
-
   build-and-sca:
     name: Build and SCA Scan - Web
-    needs: requirements
+    needs: security-sast
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

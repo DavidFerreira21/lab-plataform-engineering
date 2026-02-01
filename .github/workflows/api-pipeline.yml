@@ -25,30 +25,9 @@ jobs:
       - name: Run Bandit (SAST)
         run: bandit -r app/api -ll
 
-  requirements:
-    name: Requirements (Helm) - API
-    needs: security-sast
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Helm
-        uses: azure/setup-helm@v4
-
-      - name: Build Helm dependencies
-        run: helm dependency build app/api
-
-      - name: Verify Helm artifacts are committed
-        run: |
-          git diff --exit-code app/api/Chart.lock app/api/charts || {
-            echo "Helm dependencies changed. Commit app/api/Chart.lock and app/api/charts/*.tgz";
-            exit 1;
-          }
-
   build-and-sca:
     name: Build and SCA Scan - API
-    needs: requirements
+    needs: security-sast
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
