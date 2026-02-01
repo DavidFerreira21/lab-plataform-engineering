@@ -44,6 +44,7 @@ GitHub -> ArgoCD -> Helm -> Kubernetes
 │   └── web/                   # Web Flask + Helm chart
 ├── infra/
 │   ├── argo/                  # Application + Ingress do ArgoCD
+│   ├── minio/                 # MinIO local (S3 compatível)
 │   └── charts/                # Helm chart base (app-template)
 ├── kind-config.yaml           # Cluster Kind com portas 80/443
 ├── makefile                   # Setup local (Kind, Nginx, ArgoCD)

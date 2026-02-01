@@ -9,6 +9,8 @@ infra/
 ├── argo/
 │   ├── application.yaml      # Application com múltiplas sources (API e Web)
 │   └── ingress.yaml          # Ingress do ArgoCD
+├── minio/
+│   └── minio.yaml             # MinIO local (S3 compatível)
 └── charts/
     └── app-template/         # Chart base compartilhado pelas apps
 ```
@@ -88,3 +90,9 @@ Comandos úteis:
 - Para acessar o ArgoCD localmente, use `argocd.local` (ajuste seu `/etc/hosts`).
 - Para o Web, use o host definido em `app/web/values.yaml` (ex.: `web.local`).
 - Para fork, edite o `repoURL` em `infra/argo/application.yaml` com seu repositório
+
+## MinIO (S3 local)
+- Manifest: `infra/minio/minio.yaml`
+- Service: `minio` na namespace `app` (porta 9000)
+- Credenciais default (lab): `minioadmin` / `minioadmin`
+- Bucket inicial: `carros` (criado via Job)

@@ -20,6 +20,9 @@ spec:
         releaseName: platform-web
         valueFiles:
           - values.yaml
+    - repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
+      targetRevision: HEAD
+      path: infra/minio
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: app
