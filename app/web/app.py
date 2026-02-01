@@ -68,6 +68,10 @@ def index():
         carros = []
     return render_template('index.html', carros=carros)
 
+@app.route('/healthz')
+def healthz():
+    return {"status": "ok"}, 200
+
 @app.route('/cadastrar', methods=['POST'])
 def cadastrar():
     dados = {

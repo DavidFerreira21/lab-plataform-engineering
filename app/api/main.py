@@ -123,6 +123,10 @@ class CarroRepo:
 def get_carros():
     return CarroRepo.listar()
 
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok"}
+
 @app.post("/carros")
 def post_carro(carro: CarroSchema):
     carro_id = CarroRepo.salvar(carro.dict())
@@ -148,4 +152,3 @@ async def upload_documento(carro_id: str, documento: UploadFile = File(...)):
 
     CarroRepo.atualizar_documento(carro_id, key)
     return {"status": "ok", "bucket": S3_BUCKET, "key": key}
-

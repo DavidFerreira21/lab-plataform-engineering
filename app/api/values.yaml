@@ -31,13 +31,13 @@ app-template:
   probes:
     enabled: true
     readiness:
-      path: /carros
+      path: /healthz
       initialDelaySeconds: 20
       periodSeconds: 10
       timeoutSeconds: 3
       failureThreshold: 5
     liveness:
-      path: /carros
+      path: /healthz
       initialDelaySeconds: 30
       periodSeconds: 10
       timeoutSeconds: 3
