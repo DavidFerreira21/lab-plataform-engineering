@@ -129,6 +129,7 @@
                             <th>Marca</th>
                             <th>Modelo</th>
                             <th>Ano</th>
+                            <th>Documento</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -139,6 +140,13 @@
                             <td>{{ carro.marca }}</td>
                             <td>{{ carro.modelo }}</td>
                             <td>{{ carro.ano }}</td>
+                            <td>
+                                {% if carro.documento_key %}
+                                    {{ carro.documento_key }}
+                                {% else %}
+                                    <span class="text-muted">sem arquivo</span>
+                                {% endif %}
+                            </td>
                             <td>
                                 <a href="/excluir/{{ carro.id }}" class="btn btn-outline-warning btn-sm">Excluir</a>
                             </td>
