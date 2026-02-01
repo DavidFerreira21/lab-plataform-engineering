@@ -25,9 +25,30 @@ jobs:
       - name: Run Bandit (SAST)
         run: bandit -r app/api -ll
 
+  requirements:
+    name: Requirements (Helm) - API
+    needs: security-sast
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Build Helm dependencies
+        run: helm dependency build app/api
+
+      - name: Verify Helm artifacts are committed
+        run: |
+          git diff --exit-code app/api/Chart.lock app/api/charts || {
+            echo "Helm dependencies changed. Commit app/api/Chart.lock and app/api/charts/*.tgz";
+            exit 1;
+          }
+
   build-and-sca:
     name: Build and SCA Scan - API
-    needs: security-sast
+    needs: requirements
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -45,16 +66,15 @@ jobs:
       - name: Build with Buildpacks
         run: |
           IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro
-          # Vamos usar o SHA curto para facilitar
-          SHORT_SHA=$(git rev-parse --short HEAD)
+          VERSION=v${{ github.run_number }}
           
           # Build gerando a tag de versão
-          pack build $IMAGE_NAME:$SHORT_SHA \
+          pack build $IMAGE_NAME:$VERSION \
             --path app/api \
             --builder gcr.io/buildpacks/builder:v1
           
           # Criamos a tag latest LOCALMENTE para o Trivy não se perder
-          docker tag $IMAGE_NAME:$SHORT_SHA $IMAGE_NAME:latest
+          docker tag $IMAGE_NAME:$VERSION $IMAGE_NAME:latest
 
       - name: Run Trivy (SCA & Image Scan)
         uses: aquasecurity/trivy-action@master
@@ -70,8 +90,8 @@ jobs:
       - name: Push Image
         run: |
           IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/lab-api-carro
-          SHORT_SHA=$(git rev-parse --short HEAD)
+          VERSION=v${{ github.run_number }}
           
           # Sobe a versão específica e a latest
-          docker push $IMAGE_NAME:$SHORT_SHA
+          docker push $IMAGE_NAME:$VERSION
           docker push $IMAGE_NAME:latest

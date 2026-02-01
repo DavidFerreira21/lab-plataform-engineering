@@ -26,9 +26,30 @@ jobs:
         # O Bandit vai analisar o código Flask
         run: bandit -r app/web -ll
 
+  requirements:
+    name: Requirements (Helm) - Web
+    needs: security-sast
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Build Helm dependencies
+        run: helm dependency build app/web
+
+      - name: Verify Helm artifacts are committed
+        run: |
+          git diff --exit-code app/web/Chart.lock app/web/charts || {
+            echo "Helm dependencies changed. Commit app/web/Chart.lock and app/web/charts/*.tgz";
+            exit 1;
+          }
+
   build-and-sca:
     name: Build and SCA Scan - Web
-    needs: security-sast
+    needs: requirements
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -47,17 +68,17 @@ jobs:
         run: |
           # Define o nome da imagem e a tag (SHA curto)
           IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/lab-web-carro
-          SHORT_SHA=$(git rev-parse --short HEAD)
+          VERSION=v${{ github.run_number }}
           
-          echo "Building version: $SHORT_SHA"
+          echo "Building version: $VERSION"
           
           # Build local sem --publish para o Trivy poder escanear
-          pack build $IMAGE_NAME:$SHORT_SHA \
+          pack build $IMAGE_NAME:$VERSION \
             --path app/web \
             --builder gcr.io/buildpacks/builder:v1
 
           # Cria a tag latest localmente para conveniência
-          docker tag $IMAGE_NAME:$SHORT_SHA $IMAGE_NAME:latest
+          docker tag $IMAGE_NAME:$VERSION $IMAGE_NAME:latest
 
       - name: Run Trivy (SCA & Image Scan)
         uses: aquasecurity/trivy-action@master
@@ -73,8 +94,8 @@ jobs:
       - name: Push Web Image
         run: |
           IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/lab-web-carro
-          SHORT_SHA=$(git rev-parse --short HEAD)
+          VERSION=v${{ github.run_number }}
           
           # Envia ambas as tags para o Docker Hub
-          docker push $IMAGE_NAME:$SHORT_SHA
+          docker push $IMAGE_NAME:$VERSION
           docker push $IMAGE_NAME:latest
