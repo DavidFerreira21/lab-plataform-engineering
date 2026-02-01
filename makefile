@@ -5,7 +5,7 @@ CLUSTER_NAME=dev
 NAMESPACE_ARGO=argocd
 BIN_DIR=/usr/local/bin
 
-.PHONY: all setup cluster install-nginx install-argo bootstrap-argo status down help
+.PHONY: all setup cluster install-nginx install-argo bootstrap-argo helm-build status down help
 
 # ==========================================
 # COMANDO PRINCIPAL
@@ -103,3 +103,8 @@ down: ## Destrói tudo
 status: ## Status resumido
 	@kubectl cluster-info
 	@kubectl get pods -A
+helm-build: ## Atualiza dependências Helm (api + web)
+	@echo "⛵ Atualizando dependências Helm..."
+	@helm dependency build app/api
+	@helm dependency build app/web
+	@echo "✅ Dependências atualizadas."
