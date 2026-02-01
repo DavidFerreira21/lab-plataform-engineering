@@ -32,10 +32,10 @@ flowchart LR
 
 ### Application
 Arquivo: `infra/argo/application.yaml`
-- Usa `sources` (plural) para API e Web
+- Usa `sources` (plural) para API, Web e MinIO
 - Cada source possui `helm.releaseName` para evitar conflito de recursos
-  - `platform-api` → Service `platform-api-svc`
-  - `platform-web` → Service `platform-web-svc`
+  - `platform-api` → recursos da API
+  - `platform-web` → recursos da Web
 
 ### Ingress do ArgoCD
 Arquivo: `infra/argo/ingress.yaml`
@@ -49,8 +49,12 @@ Chart base: `infra/charts/app-template`
 - Templates: `deployment.yaml`, `service.yaml`, `ingress.yaml`
 - Suporta:
   - `service.port` e `service.targetPort`
+  - `service.name` (nome do Service)
+  - `fullnameOverride`
   - `env` para variáveis de ambiente
   - `ingress.enabled` e `ingress.host`
+  - `ingress.annotations` (ex.: `proxy-body-size`)
+  - `probes.*` (readiness/liveness)
 
 ## Dependências Helm (muito importante)
 

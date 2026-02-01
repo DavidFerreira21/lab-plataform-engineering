@@ -7,11 +7,13 @@ Este repositório é um laboratório prático de **Platform Engineering** e **De
 - **CI** com SAST/SCA, build de imagens via Buildpacks e push para registry
 - **CD GitOps** com **Helm + ArgoCD**
 - Infra local com **Kind + Nginx Ingress**
+- Storage local com **MinIO (S3 compatível)** para uploads
 
 ## Camadas atuais
 - **CI/DevSecOps**: Bandit + Trivy + Buildpacks + push de imagens
 - **CD/GitOps**: ArgoCD aplicando Helm Charts do monorepo
 - **Infra local**: Kind com Nginx Ingress (via `makefile`)
+- **Storage local**: MinIO para documentos de carros
 
 ## Roadmap (evolução do lab)
 - Terraform para provisionar infra
@@ -54,6 +56,12 @@ GitHub -> ArgoCD -> Helm -> Kubernetes
 ## CI/CD (resumo)
 - **CI**: pipelines por pasta (`app/api/**` e `app/web/**`) com Bandit, Trivy e Buildpacks
 - **CD**: ArgoCD aplica `infra/argo/application.yaml` (via `make bootstrap-argo`) e sincroniza os Helm charts
+
+## Funcionalidades recentes (destaques)
+- Upload de documento do carro (Web → API → MinIO)
+- Logs em JSON para stdout (API e Web)
+- Probes de readiness/liveness via Helm values
+- Service name configurável (`service.name`) no chart base
 
 ## Conceitos de segurança (explicações rápidas)
 - **SAST (Static Application Security Testing)**: análise do código-fonte sem executar a aplicação; identifica padrões inseguros cedo no ciclo de desenvolvimento.
