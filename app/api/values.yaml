@@ -6,6 +6,7 @@ app-template:
   service:
     port: 80
     targetPort: 8000
+    name: api-carro
   env:
     - name: S3_ENDPOINT
       value: "http://minio:9000"
@@ -27,3 +28,17 @@ app-template:
   ingress:
     enabled: false
     host: api.local
+  probes:
+    enabled: true
+    readiness:
+      path: /carros
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 2
+      failureThreshold: 3
+    liveness:
+      path: /carros
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 2
+      failureThreshold: 3

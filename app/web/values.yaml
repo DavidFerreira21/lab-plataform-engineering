@@ -6,9 +6,24 @@ app-template:
   service:
     port: 80        
     targetPort: 5000
+    name: web-carro
   ingress:
     enabled: true
     host: web.local
   env:
     - name: API_URL
-      value: "http://platform-api-svc:80/carros"
+      value: "http://api-carro:80/carros"
+  probes:
+    enabled: true
+    readiness:
+      path: /
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 2
+      failureThreshold: 3
+    liveness:
+      path: /
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 2
+      failureThreshold: 3

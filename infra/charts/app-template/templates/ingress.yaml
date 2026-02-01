@@ -15,7 +15,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: '{{ .Release.Name }}-svc'
+                name: '{{ include "app-template.serviceName" . }}'
                 port:
                   number: 80
 {{- end -}}
