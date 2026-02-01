@@ -87,6 +87,22 @@ def cadastrar():
             status_code=response.status_code,
             duration_ms=api_duration_ms,
         )
+        carro_id = response.json().get("id")
+        documento = request.files.get("documento")
+        if carro_id and documento and documento.filename:
+            upload_url = f"{API_URL}/{carro_id}/documento"
+            files = {"documento": (documento.filename, documento.stream, documento.mimetype)}
+            api_start = time.perf_counter()
+            upload_response = requests.post(upload_url, files=files, timeout=TIMEOUT)
+            api_duration_ms = round((time.perf_counter() - api_start) * 1000, 2)
+            log_json(
+                logging.INFO,
+                "api_request",
+                method="POST",
+                url=upload_url,
+                status_code=upload_response.status_code,
+                duration_ms=api_duration_ms,
+            )
     except requests.exceptions.RequestException as exc:
         log_json(
             logging.WARNING,

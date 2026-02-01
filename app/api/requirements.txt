@@ -6,3 +6,5 @@ motor
 python-dotenv
 flask
 requests
+boto3
+python-multipart

@@ -97,7 +97,7 @@
 
         <section class="glass p-4 mb-4">
             <h4 class="mb-3">Cadastrar novo carro</h4>
-            <form action="/cadastrar" method="post" class="row g-3">
+            <form action="/cadastrar" method="post" enctype="multipart/form-data" class="row g-3">
                 <div class="col-lg-4 col-md-6">
                     <input type="text" name="marca" class="form-control input-dark" placeholder="Marca" required>
                 </div>
@@ -107,7 +107,10 @@
                 <div class="col-lg-2 col-md-6">
                     <input type="number" name="ano" class="form-control input-dark" placeholder="Ano" required>
                 </div>
-                <div class="col-lg-2 col-md-6 d-grid">
+                <div class="col-lg-3 col-md-6">
+                    <input type="file" name="documento" class="form-control input-dark" accept=".pdf,.png,.jpg,.jpeg">
+                </div>
+                <div class="col-lg-1 col-md-6 d-grid">
                     <button type="submit" class="btn btn-accent">Salvar</button>
                 </div>
             </form>
