@@ -1,44 +1,150 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Cadastro de Carros</title>
+    <title>Garagem | Lab de Platform Engineering</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+    <style>
+        :root {
+            --bg-1: #0f172a;
+            --bg-2: #0b2a3d;
+            --accent: #00e5a8;
+            --accent-2: #ffb703;
+            --card: #0b1220;
+            --text: #e6edf3;
+            --muted: #94a3b8;
+        }
+        body {
+            font-family: "Space Grotesk", sans-serif;
+            background: radial-gradient(1200px 600px at 10% -10%, #1e3a8a33, transparent),
+                        radial-gradient(900px 500px at 90% -20%, #14b8a633, transparent),
+                        linear-gradient(160deg, var(--bg-1), var(--bg-2));
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .glass {
+            background: linear-gradient(180deg, rgba(13, 23, 42, 0.85), rgba(10, 18, 32, 0.9));
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+            border-radius: 16px;
+        }
+        .brand-badge {
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            color: var(--accent);
+        }
+        .title {
+            font-size: clamp(1.6rem, 3vw, 2.4rem);
+            font-weight: 700;
+        }
+        .subtitle {
+            color: var(--muted);
+        }
+        .btn-accent {
+            background: var(--accent);
+            border: none;
+            color: #0b1220;
+            font-weight: 600;
+        }
+        .btn-ghost {
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            color: var(--text);
+        }
+        .table thead {
+            color: var(--muted);
+        }
+        .table td, .table th {
+            border-color: rgba(148, 163, 184, 0.15);
+        }
+        .table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .input-dark {
+            background: #0f1b2d;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            color: var(--text);
+        }
+        .input-dark::placeholder {
+            color: #94a3b8;
+        }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+    </style>
 </head>
-<body class="container mt-5">
-    <h2>Cadastrar Novo Carro</h2>
-    <form action="/cadastrar" method="post" class="row g-3">
-        <div class="col-md-4"><input type="text" name="marca" class="form-control" placeholder="Marca" required></div>
-        <div class="col-md-4"><input type="text" name="modelo" class="form-control" placeholder="Modelo" required></div>
-        <div class="col-md-2"><input type="number" name="ano" class="form-control" placeholder="Ano" required></div>
-        <div class="col-md-2"><button type="submit" class="btn btn-success w-100">Salvar</button></div>
-    </form>
+<body>
+    <main class="container py-5">
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between mb-4 gap-3">
+            <div>
+                <div class="brand-badge">Lab de Platform Engineering</div>
+                <div class="title">Garagem de Carros</div>
+                <div class="subtitle">CRUD simples com FastAPI + Flask + GitOps</div>
+            </div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-ghost" href="/">Atualizar</a>
+                <span class="pill">API: {{ carros|length }} itens</span>
+            </div>
+        </div>
 
-    <hr>
+        <section class="glass p-4 mb-4">
+            <h4 class="mb-3">Cadastrar novo carro</h4>
+            <form action="/cadastrar" method="post" class="row g-3">
+                <div class="col-lg-4 col-md-6">
+                    <input type="text" name="marca" class="form-control input-dark" placeholder="Marca" required>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <input type="text" name="modelo" class="form-control input-dark" placeholder="Modelo" required>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <input type="number" name="ano" class="form-control input-dark" placeholder="Ano" required>
+                </div>
+                <div class="col-lg-2 col-md-6 d-grid">
+                    <button type="submit" class="btn btn-accent">Salvar</button>
+                </div>
+            </form>
+        </section>
 
-    <h3>Carros Cadastrados</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Marca</th>
-                <th>Modelo</th>
-                <th>Ano</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for carro in carros %}
-            <tr>
-                <td>{{ carro.id }}</td>
-                <td>{{ carro.marca }}</td>
-                <td>{{ carro.modelo }}</td>
-                <td>{{ carro.ano }}</td>
-                <td>
-                    <a href="/excluir/{{ carro.id }}" class="btn btn-danger btn-sm">Excluir</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <section class="glass p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h4 class="m-0">Carros cadastrados</h4>
+                <small class="text-muted">Clique em atualizar para recarregar do banco</small>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-borderless align-middle m-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Marca</th>
+                            <th>Modelo</th>
+                            <th>Ano</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for carro in carros %}
+                        <tr>
+                            <td>{{ carro.id }}</td>
+                            <td>{{ carro.marca }}</td>
+                            <td>{{ carro.modelo }}</td>
+                            <td>{{ carro.ano }}</td>
+                            <td>
+                                <a href="/excluir/{{ carro.id }}" class="btn btn-outline-warning btn-sm">Excluir</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
 </body>
 </html>
