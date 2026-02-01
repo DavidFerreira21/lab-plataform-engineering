@@ -6,7 +6,7 @@ app-template:
   service:
     port: 80
     targetPort: 8000
-    name: api-carro
+    name: api-carro-svc
   env:
     - name: S3_ENDPOINT
       value: "http://minio:9000"
