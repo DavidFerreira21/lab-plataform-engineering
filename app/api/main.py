@@ -105,6 +105,20 @@ class CarroRepo:
                 db.delete(carro)
                 db.commit()
 
+    @staticmethod
+    def atualizar_documento(carro_id, documento_key):
+        if USE_MONGO:
+            collection.update_one(
+                {"_id": ObjectId(carro_id)},
+                {"$set": {"documento_key": documento_key}},
+            )
+        else:
+            db = SessionLocal()
+            carro = db.query(CarroSQL).filter(CarroSQL.id == int(carro_id)).first()
+            if carro:
+                carro.documento_key = documento_key
+                db.commit()
+
 @app.get("/carros")
 def get_carros():
     return CarroRepo.listar()
@@ -126,10 +140,11 @@ async def upload_documento(carro_id: str, documento: UploadFile = File(...)):
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    key = f"carros/{carro_id}/{documento.filename}"
+    key = f"{carro_id}/{documento.filename}"
     try:
         s3.upload_fileobj(documento.file, S3_BUCKET, key)
     except Exception as exc:
         raise HTTPException(status_code=500, detail="upload_failed") from exc
 
+    CarroRepo.atualizar_documento(carro_id, key)
     return {"status": "ok", "bucket": S3_BUCKET, "key": key}

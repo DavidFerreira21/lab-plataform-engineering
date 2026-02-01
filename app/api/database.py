@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Column, Integer, String, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from pymongo import MongoClient
@@ -20,6 +20,7 @@ class CarroSQL(Base):
     marca = Column(String)
     modelo = Column(String)
     ano = Column(Integer)
+    documento_key = Column(String, nullable=True)
 
 # --- CONFIGURAÇÃO MONGO ---
 MONGO_URL = "mongodb://localhost:27017"
@@ -27,14 +28,24 @@ mongo_client = MongoClient(MONGO_URL)
 mongo_db = mongo_client["garagem_db"]
 collection = mongo_db["carros"]
 
+def ensure_sqlite_schema():
+    # Em ambientes de lab, garante a coluna sem migradores externos
+    with engine.connect() as conn:
+        cols = conn.execute(text("PRAGMA table_info(carros)")).fetchall()
+        col_names = {row[1] for row in cols}
+        if "documento_key" not in col_names:
+            conn.execute(text("ALTER TABLE carros ADD COLUMN documento_key VARCHAR"))
+
 # Inicialização
 if not USE_MONGO:
     Base.metadata.create_all(bind=engine)
+    ensure_sqlite_schema()
 
 class CarroSchema(BaseModel):
     marca: str
     modelo: str
     ano: int
+    documento_key: str | None = None
 
     class Config:
         from_attributes = True # Útil para converter de SQL para Pydantic
