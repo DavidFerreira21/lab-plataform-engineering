@@ -7,86 +7,15 @@ on:
       - 'app/web/**'
 
 jobs:
-  security-sast:
-    name: Security Analysis (SAST) - Web
-    # Job 1: análise estática de segurança no código da Web
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        # Busca o código do repositório para análise
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        # Prepara o ambiente Python usado pelo Bandit
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install Bandit
-        # Instala o scanner SAST de Python
-        run: pip install bandit
-
-      - name: Run Bandit (SAST)
-        # O Bandit vai analisar o código Flask
-        # Executa a análise estática do código Web
-        run: bandit -r app/web -ll
-
-  build-and-sca:
-    name: Build and SCA Scan - Web
-    needs: security-sast
-    # Job 2: build da imagem + varredura de vulnerabilidades
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        # Necessário para acessar o código da Web e o histórico Git
-        uses: actions/checkout@v4
-
-      - name: Setup Pack CLI
-        # Instala o Pack CLI (Buildpacks)
-        uses: buildpacks/github-actions/setup-pack@v5.5.0
-
-      - name: Login to Docker Hub
-        # Autentica no Docker Hub para publicar imagens
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build with Buildpacks
-        # Gera a imagem OCI com tag sequencial
-        run: |
-          # Define o nome da imagem e a tag (SHA curto)
-          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/lab-web-carro
-          VERSION=v${{ github.run_number }}
-          
-          echo "Building version: $VERSION"
-          
-          # Build local sem --publish para o Trivy poder escanear
-          pack build $IMAGE_NAME:$VERSION \
-            --path app/web \
-            --builder gcr.io/buildpacks/builder:v1
-
-          # Cria a tag latest localmente para conveniência
-          docker tag $IMAGE_NAME:$VERSION $IMAGE_NAME:latest
-
-      - name: Run Trivy (SCA & Image Scan)
-        # Escaneia dependências e imagem por CVEs críticos
-        uses: aquasecurity/trivy-action@master
-        with:
-          # Escaneamos a imagem recém-criada (usando o SHA curto)
-          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/lab-web-carro:latest'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL'
-
-      - name: Push Web Image
-        # Publica a imagem com a tag de versão e latest
-        run: |
-          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/lab-web-carro
-          VERSION=v${{ github.run_number }}
-          
-          # Envia ambas as tags para o Docker Hub
-          docker push $IMAGE_NAME:$VERSION
-          docker push $IMAGE_NAME:latest
+  web:
+    # Wrapper: chama o workflow reutilizável com os parâmetros da Web
+    uses: ./.github/workflows/python-app-template.yml
+    with:
+      # Caminho da aplicação
+      app_path: app/web
+      # Nome da imagem no Docker Hub (sem usuário)
+      image_name: lab-web-carro
+    secrets:
+      # Credenciais do Docker Hub
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
