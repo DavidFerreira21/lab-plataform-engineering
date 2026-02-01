@@ -12,6 +12,10 @@ app-template:
     host: web.local
     annotations:
       nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+      cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    tls:
+      enabled: true
+      secretName: web-local-tls
   env:
     - name: API_URL
       value: "http://api-carro:80/carros"
@@ -36,3 +40,8 @@ app-template:
     limits:
       cpu: "300m"
       memory: "256Mi"
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 70

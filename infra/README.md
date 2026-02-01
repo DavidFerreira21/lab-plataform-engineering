@@ -42,11 +42,13 @@ Arquivo: `infra/argo/ingress.yaml`
 - Host: `argocd.local`
 - Nginx ingress class
 - SSL passthrough para o ArgoCD
+- TLS via cert-manager (cluster-issuer + secret)
 
 ## Helm (chart base)
 
 Chart base: `infra/charts/app-template`
 - Templates: `deployment.yaml`, `service.yaml`, `ingress.yaml`
+- Template adicional: `hpa.yaml`
 - Suporta:
   - `service.port` e `service.targetPort`
   - `service.name` (nome do Service)
@@ -54,8 +56,10 @@ Chart base: `infra/charts/app-template`
   - `env` para variáveis de ambiente
   - `ingress.enabled` e `ingress.host`
   - `ingress.annotations` (ex.: `proxy-body-size`)
+  - `ingress.tls` (cert-manager: issuer + secretName)
   - `probes.*` (readiness/liveness)
   - `resources` (requests/limits)
+  - `hpa.*` (HorizontalPodAutoscaler)
 
 ## Dependências Helm (muito importante)
 

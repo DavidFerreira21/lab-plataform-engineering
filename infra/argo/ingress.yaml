@@ -7,8 +7,13 @@ metadata:
     ingress.kubernetes.io/protocol: "https"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS" # Faz o Nginx falar HTTPS com o Argo
     nginx.ingress.kubernetes.io/ssl-passthrough: "true" # Permite que o certificado do Argo chegue ao navegador
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - argocd.local
+    secretName: argocd-local-tls
   rules:
   - host: argocd.local
     http:
