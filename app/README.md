@@ -14,6 +14,7 @@ Esta pasta contém a camada de aplicação do lab: **API (FastAPI)** e **Web (Fl
   - `POST /carros`
   - `DELETE /carros/{id}`
   - `POST /carros/{id}/documento` (upload para MinIO/S3)
+  - `GET /healthz` (readiness/liveness)
 - Modelo: `marca`, `modelo`, `ano`
 - Campo adicional: `documento_key` (caminho do arquivo no storage)
 - Persistência:
@@ -27,6 +28,7 @@ Esta pasta contém a camada de aplicação do lab: **API (FastAPI)** e **Web (Fl
   - `/` (lista)
   - `/cadastrar` (POST)
   - `/excluir/<id>`
+  - `/healthz` (readiness/liveness)
 
 ## Variáveis de ambiente
 
@@ -91,3 +93,4 @@ Acesse: `http://127.0.0.1:5000`
 - A Web precisa do `API_URL` correto para funcionar dentro do cluster.
 - O nome do Service é configurado via `service.name` (ex.: `api-carro`, `web-carro`).
 - Uploads grandes podem exigir ajuste no Ingress (`proxy-body-size`).
+- Os probes usam `/healthz` para evitar dependência da API na rota `/`.

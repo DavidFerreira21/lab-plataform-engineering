@@ -55,6 +55,7 @@ Chart base: `infra/charts/app-template`
   - `ingress.enabled` e `ingress.host`
   - `ingress.annotations` (ex.: `proxy-body-size`)
   - `probes.*` (readiness/liveness)
+  - `resources` (requests/limits)
 
 ## Dependências Helm (muito importante)
 

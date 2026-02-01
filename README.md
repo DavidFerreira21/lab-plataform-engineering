@@ -57,11 +57,19 @@ GitHub -> ArgoCD -> Helm -> Kubernetes
 - **CI**: pipelines por pasta (`app/api/**` e `app/web/**`) com Bandit, Trivy e Buildpacks
 - **CD**: ArgoCD aplica `infra/argo/application.yaml` (via `make bootstrap-argo`) e sincroniza os Helm charts
 
+## Pipelines reutilizáveis (como fizemos no lab)
+- Criamos um workflow reutilizável em `.github/workflows/python-app-template.yml`
+- `api-pipeline.yml` e `web-pipeline.yml` apenas chamam esse template passando `app_path` e `image_name`
+- Isso reduz duplicação e facilita manutenção no monorepo
+- Em produção, é comum separar repositórios e usar **pipelines padrões da companhia** (templates corporativos) por time/serviço
+
 ## Funcionalidades recentes (destaques)
 - Upload de documento do carro (Web → API → MinIO)
 - Logs em JSON para stdout (API e Web)
 - Probes de readiness/liveness via Helm values
 - Service name configurável (`service.name`) no chart base
+- Healthchecks dedicados em `/healthz`
+- Recursos (requests/limits) via Helm values
 
 ## Conceitos de segurança (explicações rápidas)
 - **SAST (Static Application Security Testing)**: análise do código-fonte sem executar a aplicação; identifica padrões inseguros cedo no ciclo de desenvolvimento.
