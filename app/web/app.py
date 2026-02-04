@@ -146,3 +146,4 @@ if __name__ == '__main__':
     # usamos # nosec B104 para informar ao Bandit que isso é intencional.
     app.run(host='0.0.0.0', port=5000, debug=DEBUG_MODE)  # nosec B104
     
+    

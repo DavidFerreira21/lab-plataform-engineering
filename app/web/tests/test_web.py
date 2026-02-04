@@ -106,3 +106,4 @@ def test_excluir(monkeypatch, client):
     resp = client.get("/excluir/123")
     assert resp.status_code == 302
     assert called["url"] == f"{web_app.API_URL}/123"
+    

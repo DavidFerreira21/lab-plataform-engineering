@@ -16,3 +16,4 @@ def test_get_s3_client_missing_creds(monkeypatch):
 
     with pytest.raises(RuntimeError):
         main.get_s3_client()
+        
