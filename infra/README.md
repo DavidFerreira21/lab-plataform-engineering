@@ -15,19 +15,6 @@ infra/
     └── app-template/         # Chart base compartilhado pelas apps
 ```
 
-## Arquitetura (Infra/GitOps)
-
-```mermaid
-flowchart LR
-  Dev["Dev / Git Commit"] --> GH["GitHub Repo"]
-  GH -->|Sync| Argo["ArgoCD"]
-  Argo -->|"Helm render/apply"| K8s["Kubernetes (Kind)"]
-  K8s --> Web["Service Web + Ingress"]
-  K8s --> API["Service API"]
-  Ingress["Nginx Ingress"] --> Web
-  ArgoUI["ArgoCD UI"] --> Argo
-```
-
 ## ArgoCD (GitOps)
 
 ### Application
@@ -40,7 +27,7 @@ Arquivo: `infra/argo/application.yaml`
 ### Ingress do ArgoCD
 Arquivo: `infra/argo/ingress.yaml`
 - Host: `argocd.local`
-- Nginx ingress class
+- Nginx ingress class (Nginx Ingress Controller)
 - SSL passthrough para o ArgoCD
 - TLS via cert-manager (cluster-issuer + secret)
 
@@ -78,13 +65,14 @@ Depois commite:
 - `app/web/charts/*.tgz`
 
 ## Ambiente local (Kind + Nginx + ArgoCD)
-O `makefile` na raiz automatiza o setup. A lista de comandos principais fica no `README.md` da raiz.
+O `makefile` na raiz automatiza o setup. A lista de comandos principais fica no `README.md` da raiz: [README.md](../README.md).
 
 ## Observações
 - O Kind expõe portas 80/443 para o host via `kind-config.yaml`.
 - Para acessar o ArgoCD localmente, use `argocd.local` (ajuste seu `/etc/hosts`).
 - Para o Web, use o host definido em `app/web/values.yaml` (ex.: `web.local`).
 - Para fork, edite o `repoURL` em `infra/argo/application.yaml` com seu repositório
+  - Ex.: `repoURL: 'https://github.com/seu-usuario/seu-repo.git'`
 
 ## MinIO (S3 local)
 - Manifest: `infra/minio/minio.yaml`

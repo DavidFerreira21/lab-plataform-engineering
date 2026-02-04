@@ -19,6 +19,8 @@ Este repositório é um laboratório prático de **Platform Engineering** e **De
 - Terraform para provisionar infra
 - MongoDB Atlas criado via Terraform
 - GitOps para Terraform com Terraform Controller
+- Pipeline completa de Terraform (plan/apply e validações)
+- Policy as Code para Kubernetes e Terraform
 - Evolução até Backstage e fluxo completo de Platform Engineering
 
 ## Documentação detalhada
@@ -61,6 +63,7 @@ flowchart LR
   User["Usuário/Browser"] --> Web
 ```
 
+
 ## CI/CD (resumo)
 O CI roda por pasta (`app/api/**` e `app/web/**`) com **Ruff/Black**, **Pytest**, Bandit, Trivy e Buildpacks. O CD usa ArgoCD para aplicar `infra/argo/application.yaml` (via `make bootstrap-argo`) e sincronizar os Helm charts.
 
@@ -99,6 +102,21 @@ flowchart LR
 - **Black**: formatador automático de Python que padroniza o estilo e evita discussões de formatação em PRs. Mantém o código consistente em todo o monorepo.
 - **Testes unitários**: validam funções/módulos isoladamente, com dependências simuladas (mocks), para feedback rápido. Ajudam a isolar regressões sem depender de infraestrutura.
 - **Pytest**: framework de testes em Python; organiza suites, facilita fixtures e gera relatórios legíveis. Permite escrever testes simples e escaláveis com pouco boilerplate.
+
+
+
+## Arquitetura CD (visão rápida)
+
+```mermaid
+flowchart LR
+  Dev["Dev / Git Commit"] --> GH["GitHub Repo"]
+  GH -->|Sync| Argo["ArgoCD"]
+  Argo -->|"Helm render/apply"| K8s["Kubernetes (Kind)"]
+  K8s --> Web["Service Web + Ingress"]
+  K8s --> API["Service API"]
+  Ingress["Nginx Ingress"] --> Web
+  ArgoUI["ArgoCD UI"] --> Argo
+```
 
 ## Itens de CD (explicações rápidas)
 - **GitOps**: CD guiado por Git; o cluster aplica o estado desejado a partir do repositório e o Git vira fonte da verdade. Isso simplifica auditoria e rollback.
