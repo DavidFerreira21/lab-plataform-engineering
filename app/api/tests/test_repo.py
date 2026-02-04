@@ -1,6 +1,11 @@
 import types
+from pathlib import Path
+import sys
 
 import pytest
+
+# Garante que app/api esteja no sys.path para importar main.py
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import main
 

@@ -1,6 +1,7 @@
 import types
 from pathlib import Path
 import sys
+import io
 
 import pytest
 import requests
@@ -39,7 +40,7 @@ def test_index_success(monkeypatch, client):
 
 def test_index_request_error(monkeypatch, client):
     """Deve renderizar a home mesmo quando a API falha."""
-    def fake_get(_url, _timeout):
+    def fake_get(_url, timeout=None):
         raise requests.exceptions.RequestException("boom")
 
     monkeypatch.setattr(requests, "get", fake_get)
@@ -83,7 +84,7 @@ def test_cadastrar_with_upload(monkeypatch, client):
         "marca": "A",
         "modelo": "B",
         "ano": "2020",
-        "documento": ("doc.txt", b"hello", "text/plain"),
+        "documento": (io.BytesIO(b"hello"), "doc.txt", "text/plain"),
     }
 
     resp = client.post("/cadastrar", data=data, content_type="multipart/form-data")
