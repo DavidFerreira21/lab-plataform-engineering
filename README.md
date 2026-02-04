@@ -42,22 +42,30 @@ Este repositório é um laboratório prático de **Platform Engineering** e **De
 └── README.md
 ```
 
-## Arquitetura
+## Visão geral do lab
 
-```
-[Browser] -> [Web Flask] -> [API FastAPI] -> [SQLite/Mongo]
-```
+Fluxo de ponta a ponta: commit → CI → registry → ArgoCD → cluster → apps.
 
-GitOps/CD:
-```
-GitHub -> ArgoCD -> Helm -> Kubernetes
+```mermaid
+%%{init: {"themeVariables": {"fontSize": "16px"}}}%%
+flowchart LR
+  Dev["Dev / Git Commit"] --> GH["GitHub Repo"]
+  GH --> CI["CI (Lint/Test/SAST/SCA/Build)"]
+  CI --> Registry["Registry (Docker Hub)"]
+  Registry --> Argo["ArgoCD"]
+  Argo --> K8s["Kubernetes (Kind)"]
+  K8s --> Web["Web (Flask)"]
+  K8s --> API["API (FastAPI)"]
+  API --> DB["SQLite/Mongo"]
+  API --> S3["MinIO (S3 compatível)"]
+  User["Usuário/Browser"] --> Web
 ```
 
 ## CI/CD (resumo)
-- **CI**: pipelines por pasta (`app/api/**` e `app/web/**`) com **Ruff/Black**, **Pytest**, Bandit, Trivy e Buildpacks
-- **CD**: ArgoCD aplica `infra/argo/application.yaml` (via `make bootstrap-argo`) e sincroniza os Helm charts
+O CI roda por pasta (`app/api/**` e `app/web/**`) com **Ruff/Black**, **Pytest**, Bandit, Trivy e Buildpacks. O CD usa ArgoCD para aplicar `infra/argo/application.yaml` (via `make bootstrap-argo`) e sincronizar os Helm charts.
 
 ## Esteira CI (visão rápida)
+Implementação: `.github/workflows/python-app-template.yml`.
 
 ```mermaid
 %%{init: {"themeVariables": {"fontSize": "16px"}}}%%
