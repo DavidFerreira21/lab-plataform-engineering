@@ -6,6 +6,16 @@ Esta pasta contém a camada de aplicação do lab: **API (FastAPI)** e **Web (Fl
 - `Procfile`
 - Helm chart com values
 
+## Arquitetura (Apps)
+
+```mermaid
+flowchart LR
+  User["Usuário/Browser"] --> Web["Web (Flask)"]
+  Web -->|"HTTP /carros"| API["API (FastAPI)"]
+  API --> DB["SQLite/Mongo"]
+  API --> S3["MinIO (S3 compatível)"]
+```
+
 ## Serviços
 
 ### API (FastAPI)
@@ -72,7 +82,7 @@ Arquivo: `app/web/values.yaml`
 ### API
 ```bash
 cd app/api
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
@@ -81,13 +91,30 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ### Web
 ```bash
 cd app/web
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python app.py
 ```
 
 Acesse: `http://127.0.0.1:5000`
+
+## Testes
+
+### API
+```bash
+cd app/api
+pytest app/api/tests
+```
+
+### Web
+```bash
+cd app/web
+pytest app/web/tests
+```
+
+### Saída dos testes
+- O `pytest.ini` na raiz habilita saída verbose (`-vv -rA`).
 
 ## Observações
 - A Web precisa do `API_URL` correto para funcionar dentro do cluster.

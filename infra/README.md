@@ -19,13 +19,13 @@ infra/
 
 ```mermaid
 flowchart LR
-  Dev[Dev / Git Commit] --> GH[GitHub Repo]
-  GH -->|Sync| Argo[ArgoCD]
-  Argo -->|Helm render/apply| K8s[Kubernetes (Kind)]
-  K8s --> Web[Service Web + Ingress]
-  K8s --> API[Service API]
-  Ingress[Nginx Ingress] --> Web
-  ArgoUI[ArgoCD UI] --> Argo
+  Dev["Dev / Git Commit"] --> GH["GitHub Repo"]
+  GH -->|Sync| Argo["ArgoCD"]
+  Argo -->|"Helm render/apply"| K8s["Kubernetes (Kind)"]
+  K8s --> Web["Service Web + Ingress"]
+  K8s --> API["Service API"]
+  Ingress["Nginx Ingress"] --> Web
+  ArgoUI["ArgoCD UI"] --> Argo
 ```
 
 ## ArgoCD (GitOps)
@@ -78,21 +78,7 @@ Depois commite:
 - `app/web/charts/*.tgz`
 
 ## Ambiente local (Kind + Nginx + ArgoCD)
-
-O `makefile` na raiz automatiza o setup:
-
-```bash
-make all
-```
-
-Comandos úteis:
-- `make setup` instala Docker/Kubectl/Kind/Helm
-- `make cluster` cria o cluster Kind (usa `kind-config.yaml`)
-- `make install-nginx` instala o Nginx Ingress
-- `make install-argo` instala o ArgoCD
-- `make bootstrap-argo` aplica Application e Ingress do ArgoCD
-- `make status` mostra status do cluster
-- `make down` remove o cluster
+O `makefile` na raiz automatiza o setup. A lista de comandos principais fica no `README.md` da raiz.
 
 ## Observações
 - O Kind expõe portas 80/443 para o host via `kind-config.yaml`.
