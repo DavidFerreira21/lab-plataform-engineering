@@ -20,9 +20,36 @@ on:
         # Token de acesso do Docker Hub
 
 jobs:
+  unit-tests:
+    name: Unit Tests (Pytest)
+    # Job 0: executa testes unitários da aplicação
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        # Necessário para acessar o código e os testes
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        # Prepara o ambiente Python usado pelos testes
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        # Instala dependências da aplicação
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ${{ inputs.app_path }}/requirements.txt
+
+      - name: Run Pytest
+        # Executa testes unitários
+        run: |
+          pytest -q ${{ inputs.app_path }}/tests
+
   security-sast:
     name: Security Analysis (SAST)
     # Job 1: análise estática de segurança no código
+    needs: unit-tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

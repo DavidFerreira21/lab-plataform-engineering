@@ -8,3 +8,4 @@ flask
 requests
 boto3
 python-multipart
+pytest
