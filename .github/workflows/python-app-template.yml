@@ -42,9 +42,9 @@ jobs:
           pip install -r ${{ inputs.app_path }}/requirements.txt
 
       - name: Run Pytest
-        # Executa testes unitários
+        # Executa testes unitários (usa pytest.ini para saída mais detalhada)
         run: |
-          pytest -q ${{ inputs.app_path }}/tests
+          pytest ${{ inputs.app_path }}/tests
 
   security-sast:
     name: Security Analysis (SAST)
