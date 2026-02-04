@@ -1,7 +1,7 @@
+import io
+import sys
 import types
 from pathlib import Path
-import sys
-import io
 
 import pytest
 import requests
@@ -27,6 +27,7 @@ def test_healthz(client):
 
 def test_index_success(monkeypatch, client):
     """Deve renderizar a home quando a API responde com sucesso."""
+
     def fake_get(url, timeout):
         assert url == web_app.API_URL
         assert timeout == web_app.TIMEOUT
@@ -40,6 +41,7 @@ def test_index_success(monkeypatch, client):
 
 def test_index_request_error(monkeypatch, client):
     """Deve renderizar a home mesmo quando a API falha."""
+
     def fake_get(_url, timeout=None):
         raise requests.exceptions.RequestException("boom")
 
@@ -106,4 +108,3 @@ def test_excluir(monkeypatch, client):
     resp = client.get("/excluir/123")
     assert resp.status_code == 302
     assert called["url"] == f"{web_app.API_URL}/123"
-    

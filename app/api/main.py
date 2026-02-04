@@ -1,12 +1,14 @@
-from fastapi import FastAPI, Request, UploadFile, File, HTTPException
-from database import USE_MONGO, SessionLocal, CarroSQL, collection, CarroSchema
-from bson import ObjectId
 import logging
 import sys
 import json
 import time
 import os
+
 import boto3
+from bson import ObjectId
+from fastapi import FastAPI, Request, UploadFile, File, HTTPException
+
+from database import USE_MONGO, SessionLocal, CarroSQL, collection, CarroSchema
 
 app = FastAPI()
 
@@ -24,6 +26,7 @@ S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "")
 S3_REGION = os.getenv("S3_REGION", "us-east-1")
 S3_USE_SSL = os.getenv("S3_USE_SSL", "false").lower() == "true"
 
+
 def get_s3_client():
     if not S3_ACCESS_KEY or not S3_SECRET_KEY:
         raise RuntimeError("S3 credentials not configured")
@@ -36,9 +39,11 @@ def get_s3_client():
         use_ssl=S3_USE_SSL,
     )
 
+
 def log_json(level, message, **fields):
     payload = {"level": level, "message": message, **fields}
     logger.log(level, json.dumps(payload, ensure_ascii=True))
+
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -67,6 +72,7 @@ async def log_requests(request: Request, call_next):
             error=str(exc),
         )
         raise
+
 
 class CarroRepo:
     @staticmethod
@@ -119,23 +125,28 @@ class CarroRepo:
                 carro.documento_key = documento_key
                 db.commit()
 
+
 @app.get("/carros")
 def get_carros():
     return CarroRepo.listar()
 
+
 @app.get("/healthz")
 def healthz():
     return {"status": "ok"}
+
 
 @app.post("/carros")
 def post_carro(carro: CarroSchema):
     carro_id = CarroRepo.salvar(carro.dict())
     return {"status": "ok", "id": carro_id}
 
+
 @app.delete("/carros/{carro_id}")
-def delete_carro(carro_id: str): # Recebe string pois o ID do Mongo é hash
+def delete_carro(carro_id: str):  # Recebe string pois o ID do Mongo é hash
     CarroRepo.deletar(carro_id)
     return {"status": "removido"}
+
 
 @app.post("/carros/{carro_id}/documento")
 async def upload_documento(carro_id: str, documento: UploadFile = File(...)):
