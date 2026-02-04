@@ -152,4 +152,3 @@ async def upload_documento(carro_id: str, documento: UploadFile = File(...)):
 
     CarroRepo.atualizar_documento(carro_id, key)
     return {"status": "ok", "bucket": S3_BUCKET, "key": key}
-
