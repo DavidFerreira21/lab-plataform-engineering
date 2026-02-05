@@ -18,7 +18,7 @@ app-template:
       secretName: web-local-tls
   env:
     - name: API_URL
-      value: "http://api-carro:80/carros"
+      value: "http://api-carro-svc:80/carros"
   probes:
     enabled: true
     readiness:
