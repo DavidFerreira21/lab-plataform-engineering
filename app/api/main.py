@@ -79,13 +79,24 @@ class CarroRepo:
     def listar():
         if USE_MONGO:
             # Converte o _id do Mongo para string para o JSON aceitar
-            lista = list(collection.find())
-            for item in lista:
-                item["id"] = str(item["_id"])
+            lista = []
+            for item in collection.find():
+                item = dict(item)
+                item["id"] = str(item.pop("_id"))
+                lista.append(item)
             return lista
         else:
             db = SessionLocal()
-            return db.query(CarroSQL).all()
+            return [
+                {
+                    "id": carro.id,
+                    "marca": carro.marca,
+                    "modelo": carro.modelo,
+                    "ano": carro.ano,
+                    "documento_key": carro.documento_key,
+                }
+                for carro in db.query(CarroSQL).all()
+            ]
 
     @staticmethod
     def salvar(carro_dict):
