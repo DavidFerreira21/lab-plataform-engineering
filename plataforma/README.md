@@ -1,6 +1,6 @@
-# Infra (Helm + ArgoCD + Kind)
+# Plataforma (Helm + ArgoCD + Kind)
 
-Esta pasta contém a camada de infra do lab: **GitOps com ArgoCD**, **charts Helm** e recursos para ambiente local com **Kind + Nginx Ingress**.
+Esta pasta contém a camada de plataforma do lab: **GitOps com ArgoCD**, **charts Helm** e recursos para ambiente local com **Kind + Nginx Ingress**.
 
 ## Estrutura
 

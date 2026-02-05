@@ -6,17 +6,17 @@ Este repositório é um laboratório prático de **Platform Engineering** e **De
 - Monorepo com **API (FastAPI)** e **Web (Flask)**
 - **CI** com SAST/SCA, build de imagens via Buildpacks e push para registry
 - **CD GitOps** com **Helm + ArgoCD**
-- Infra local com **Kind + Nginx Ingress**
+- Plataforma local com **Kind + Nginx Ingress**
 - Storage local com **MinIO (S3 compatível)** para uploads
 
 ## Camadas atuais
 - **CI/DevSecOps**: Bandit + Trivy + Buildpacks + push de imagens
 - **CD/GitOps**: ArgoCD aplicando Helm Charts do monorepo
-- **Infra local**: Kind com Nginx Ingress (via `makefile`)
+- **Plataforma local**: Kind com Nginx Ingress (via `makefile`)
 - **Storage local**: MinIO para documentos de carros
 
 ## Roadmap (evolução do lab)
-- Terraform para provisionar infra
+- Terraform para provisionar plataforma
 - MongoDB Atlas criado via Terraform
 - GitOps para Terraform com Terraform Controller
 - Pipeline completa de Terraform (plan/apply e validações)
@@ -25,7 +25,7 @@ Este repositório é um laboratório prático de **Platform Engineering** e **De
 
 ## Documentação detalhada
 - Apps (API + Web): [app/README.md](app/README.md)
-- Infra (Helm + ArgoCD + Kind): [plataforma/README.md](plataforma/README.md)
+- Plataforma (Helm + ArgoCD + Kind): [plataforma/README.md](plataforma/README.md)
 
 ## Estrutura do repositório
 
@@ -134,11 +134,11 @@ flowchart LR
 - **ArgoCD com `sources` múltiplos**: uma única Application gerencia API e Web; em produção pode ser interessante separar Applications por serviço.
 
 ## Como rodar localmente (atalho)
-- Infra/cluster: `make all` (ver detalhes em `plataforma/README.md`)
+- Plataforma/cluster: `make all` (ver detalhes em `plataforma/README.md`)
 - Apps localmente: ver `app/README.md`
 
 ## Makefile (comandos principais)
-O `makefile` padroniza o setup da **infra base local** do lab e serve como pré-requisito para rodar o ambiente (Kind, Nginx Ingress e ArgoCD) de forma reproduzível.
+O `makefile` padroniza o setup da **plataforma base local** do lab e serve como pré-requisito para rodar o ambiente (Kind, Nginx Ingress e ArgoCD) de forma reproduzível.
 - `make setup` instala Docker/Kubectl/Kind/Helm
 - `make cluster` cria o cluster Kind (usa `kind-config.yaml`)
 - `make install-nginx` instala o Nginx Ingress
@@ -156,4 +156,4 @@ O `makefile` padroniza o setup da **infra base local** do lab e serve como pré-
 
 ## Links rápidos
 - App docs: `app/README.md`
-- Infra docs: `plataforma/README.md`
+- Docs da plataforma: `plataforma/README.md`
