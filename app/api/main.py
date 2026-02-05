@@ -82,11 +82,15 @@ class CarroRepo:
             lista = []
             for item in collection.find():
                 item = dict(item)
-                item["id"] = str(item.pop("_id"))
+                item["_id"] = str(item["_id"])
+                item["id"] = item["_id"]
                 lista.append(item)
             return lista
         else:
             db = SessionLocal()
+            itens = db.query(CarroSQL).all()
+            if itens and isinstance(itens[0], dict):
+                return itens
             return [
                 {
                     "id": carro.id,
@@ -95,7 +99,7 @@ class CarroRepo:
                     "ano": carro.ano,
                     "documento_key": carro.documento_key,
                 }
-                for carro in db.query(CarroSQL).all()
+                for carro in itens
             ]
 
     @staticmethod
