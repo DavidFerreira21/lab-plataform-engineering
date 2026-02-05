@@ -4,7 +4,7 @@ Esta pasta contém a camada de aplicação do lab: **API (FastAPI)** e **Web (Fl
 - código-fonte
 - dependências (`requirements.txt`)
 - `Procfile`
-- Helm chart com values
+- Helm chart com values em `gitops/`
 
 ## Arquitetura (Apps)
 
@@ -58,7 +58,7 @@ flowchart LR
 ## Helm values (Kubernetes)
 
 ### API
-Arquivo: `app/api/values.yaml`
+Arquivo: `gitops/app/values.yaml`
 - `image.repository` / `image.tag`
 - `service.port` (porta do Service)
 - `service.targetPort` (porta real do container, API roda em 8000)
@@ -67,7 +67,7 @@ Arquivo: `app/api/values.yaml`
 - `env` com variáveis S3/MinIO
 
 ### Web
-Arquivo: `app/web/values.yaml`
+Arquivo: `gitops/web/values.yaml`
 - `image.repository` / `image.tag`
 - `service.port` (porta do Service)
 - `service.targetPort` (porta real do container, Web roda em 5000)

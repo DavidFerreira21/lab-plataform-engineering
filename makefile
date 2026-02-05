@@ -79,7 +79,7 @@ install-nginx: ## Instala e configura o Nginx Ingress para Kind
 install-argo: ## Instalação do ArgoCD
 	@echo "🐙 Instalando ArgoCD..."
 	@kubectl create namespace $(NAMESPACE_ARGO) || true
-	@kubectl apply -n $(NAMESPACE_ARGO) -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+	@kubectl apply --server-side -n $(NAMESPACE_ARGO) -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 	@echo "⏳ Aguardando ArgoCD..."
 	@kubectl wait --namespace $(NAMESPACE_ARGO) --for=condition=Ready pod --selector=app.kubernetes.io/name=argocd-server --timeout=180s
 
@@ -105,6 +105,6 @@ status: ## Status resumido
 	@kubectl get pods -A
 helm-build: ## Atualiza dependências Helm (api + web)
 	@echo "⛵ Atualizando dependências Helm..."
-	@helm dependency build app/api
-	@helm dependency build app/web
+	@helm dependency build gitops/app
+	@helm dependency build gitops/web
 	@echo "✅ Dependências atualizadas."

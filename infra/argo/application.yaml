@@ -8,14 +8,14 @@ spec:
   sources: # Mudamos para 'sources' (plural)
     - repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
       targetRevision: HEAD
-      path: app/api
+      path: gitops/app
       helm:
         releaseName: platform-api
         valueFiles:
           - values.yaml
     - repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
       targetRevision: HEAD
-      path: app/web
+      path: gitops/web
       helm:
         releaseName: platform-web
         valueFiles:

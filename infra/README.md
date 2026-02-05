@@ -50,19 +50,19 @@ Chart base: `infra/charts/app-template`
 
 ## Dependências Helm (muito importante)
 
-Os charts de `app/api` e `app/web` **vendorizam** o chart base em `app/*/charts/`.
+Os charts de `gitops/app` e `gitops/web` **vendorizam** o chart base em `gitops/*/charts/`.
 Sempre que o chart base mudar, rode:
 
 ```bash
-helm dependency build app/api
-helm dependency build app/web
+helm dependency build gitops/app
+helm dependency build gitops/web
 ```
 
 Depois commite:
-- `app/api/Chart.lock`
-- `app/web/Chart.lock`
-- `app/api/charts/*.tgz`
-- `app/web/charts/*.tgz`
+- `gitops/app/Chart.lock`
+- `gitops/web/Chart.lock`
+- `gitops/app/charts/*.tgz`
+- `gitops/web/charts/*.tgz`
 
 ## Ambiente local (Kind + Nginx + ArgoCD)
 O `makefile` na raiz automatiza o setup. A lista de comandos principais fica no `README.md` da raiz: [README.md](../README.md).
@@ -70,7 +70,7 @@ O `makefile` na raiz automatiza o setup. A lista de comandos principais fica no 
 ## Observações
 - O Kind expõe portas 80/443 para o host via `kind-config.yaml`.
 - Para acessar o ArgoCD localmente, use `argocd.local` (ajuste seu `/etc/hosts`).
-- Para o Web, use o host definido em `app/web/values.yaml` (ex.: `web.local`).
+- Para o Web, use o host definido em `gitops/web/values.yaml` (ex.: `web.local`).
 - Para fork, edite o `repoURL` em `infra/argo/application.yaml` com seu repositório
   - Ex.: `repoURL: 'https://github.com/seu-usuario/seu-repo.git'`
 

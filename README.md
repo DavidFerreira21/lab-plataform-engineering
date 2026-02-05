@@ -33,8 +33,11 @@ Este repositório é um laboratório prático de **Platform Engineering** e **De
 .
 ├── .github/workflows/         # Pipelines CI (API e Web)
 ├── app/
-│   ├── api/                   # API FastAPI + Helm chart
-│   └── web/                   # Web Flask + Helm chart
+│   ├── api/                   # API FastAPI
+│   └── web/                   # Web Flask
+├── gitops/
+│   ├── app/                   # Helm chart da API
+│   └── web/                   # Helm chart da Web
 ├── infra/
 │   ├── argo/                  # Application + Ingress do ArgoCD
 │   ├── minio/                 # MinIO local (S3 compatível)
@@ -65,7 +68,7 @@ flowchart LR
 
 
 ## CI/CD (resumo)
-O CI roda por pasta (`app/api/**` e `app/web/**`) com **Ruff/Black**, **Pytest**, Bandit, Trivy e Buildpacks. O CD usa ArgoCD para aplicar `infra/argo/application.yaml` (via `make bootstrap-argo`) e sincronizar os Helm charts.
+O CI roda por pasta (`app/api/**` e `app/web/**`) com **Ruff/Black**, **Pytest**, Bandit, Trivy e Buildpacks. O CD usa ArgoCD para aplicar `infra/argo/application.yaml` (via `make bootstrap-argo`) e sincronizar os Helm charts em `gitops/`.
 
 ## Esteira CI (visão rápida)
 Implementação: `.github/workflows/python-app-template.yml`.
@@ -145,10 +148,10 @@ O `makefile` padroniza o setup da **infra base local** do lab e serve como pré-
 - `make down` remove o cluster
 
 ## Observações importantes
-- Os charts de `app/api` e `app/web` usam o chart base `infra/charts/app-template` como dependência.
+- Os charts de `gitops/app` e `gitops/web` usam o chart base `infra/charts/app-template` como dependência.
 - Sempre que o chart base muda, é necessário rodar:
-  - `helm dependency build app/api`
-  - `helm dependency build app/web`
+  - `helm dependency build gitops/app`
+  - `helm dependency build gitops/web`
   - Commitar `Chart.lock` e `charts/*.tgz`
 
 ## Links rápidos
