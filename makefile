@@ -85,8 +85,8 @@ install-argo: ## Instalação do ArgoCD
 
 bootstrap-argo: ## Conecta o Argo ao Monorepo
 	@echo "🏗️ Aplicando configurações de GitOps..."
-	@kubectl apply -f infra/argo/application.yaml
-	@kubectl apply -f infra/argo/ingress.yaml || echo "⚠️ Ingress do Argo não aplicado."
+	@kubectl apply -f plataforma/argo/application.yaml
+	@kubectl apply -f plataforma/argo/ingress.yaml || echo "⚠️ Ingress do Argo não aplicado."
 	@echo "🔑 Senha Admin ArgoCD:"
 	@kubectl -n $(NAMESPACE_ARGO) get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 

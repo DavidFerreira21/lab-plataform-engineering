@@ -5,7 +5,7 @@ Esta pasta contém a camada de infra do lab: **GitOps com ArgoCD**, **charts Hel
 ## Estrutura
 
 ```text
-infra/
+plataforma/
 ├── argo/
 │   ├── application.yaml      # Application com múltiplas sources (API e Web)
 │   └── ingress.yaml          # Ingress do ArgoCD
@@ -18,14 +18,14 @@ infra/
 ## ArgoCD (GitOps)
 
 ### Application
-Arquivo: `infra/argo/application.yaml`
+Arquivo: `plataforma/argo/application.yaml`
 - Usa `sources` (plural) para API, Web e MinIO
 - Cada source possui `helm.releaseName` para evitar conflito de recursos
   - `platform-api` → recursos da API
   - `platform-web` → recursos da Web
 
 ### Ingress do ArgoCD
-Arquivo: `infra/argo/ingress.yaml`
+Arquivo: `plataforma/argo/ingress.yaml`
 - Host: `argocd.local`
 - Nginx ingress class (Nginx Ingress Controller)
 - SSL passthrough para o ArgoCD
@@ -33,7 +33,7 @@ Arquivo: `infra/argo/ingress.yaml`
 
 ## Helm (chart base)
 
-Chart base: `infra/charts/app-template`
+Chart base: `plataforma/charts/app-template`
 - Templates: `deployment.yaml`, `service.yaml`, `ingress.yaml`
 - Template adicional: `hpa.yaml`
 - Suporta:
@@ -71,11 +71,11 @@ O `makefile` na raiz automatiza o setup. A lista de comandos principais fica no 
 - O Kind expõe portas 80/443 para o host via `kind-config.yaml`.
 - Para acessar o ArgoCD localmente, use `argocd.local` (ajuste seu `/etc/hosts`).
 - Para o Web, use o host definido em `gitops/web/values.yaml` (ex.: `web.local`).
-- Para fork, edite o `repoURL` em `infra/argo/application.yaml` com seu repositório
+- Para fork, edite o `repoURL` em `plataforma/argo/application.yaml` com seu repositório
   - Ex.: `repoURL: 'https://github.com/seu-usuario/seu-repo.git'`
 
 ## MinIO (S3 local)
-- Manifest: `infra/minio/minio.yaml`
+- Manifest: `plataforma/minio/minio.yaml`
 - Service: `minio` na namespace `app` (porta 9000)
 - Credenciais default (lab): `minioadmin` / `minioadmin`
 - Bucket inicial: `carros` (criado via Job)
