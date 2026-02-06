@@ -14,7 +14,7 @@ module "eks" {
   fargate_profiles = var.enable_fargate_karpenter ? {
     karpenter = {
       name       = "karpenter"
-      subnet_ids = var.subnet_ids
+      subnet_ids = local.subnet_ids_effective
       selectors = [
         {
           namespace = var.karpenter_namespace
