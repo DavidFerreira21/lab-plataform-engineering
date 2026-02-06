@@ -22,8 +22,15 @@ locals {
   subnet_ids_effective = length(var.subnet_ids) > 0 ? var.subnet_ids : data.aws_subnets.default.ids
 }
 
+data "aws_subnet" "selected" {
+  for_each = toset(local.subnet_ids_effective)
+  id       = each.value
+}
+
 locals {
   oidc_provider_host = module.eks.oidc_provider
+  private_subnet_ids = [for s in data.aws_subnet.selected : s.id if !s.map_public_ip_on_launch]
+  fargate_subnet_ids_effective = length(var.fargate_subnet_ids) > 0 ? var.fargate_subnet_ids : local.private_subnet_ids
   aws_auth_roles_effective = var.enable_karpenter ? concat(
     var.aws_auth_roles,
     [

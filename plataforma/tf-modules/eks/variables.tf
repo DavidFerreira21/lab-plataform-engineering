@@ -33,6 +33,12 @@ variable "subnet_ids" {
   default     = []
 }
 
+variable "fargate_subnet_ids" {
+  type        = list(string)
+  description = "Private subnets for Fargate profiles. If empty, uses private subnets from subnet_ids/default."
+  default     = []
+}
+
 variable "enable_karpenter" {
   type        = bool
   description = "Enable Karpenter IAM and SQS dependencies."

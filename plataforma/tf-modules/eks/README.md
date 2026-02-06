@@ -42,6 +42,7 @@ Se `vpc_id` estiver vazio ou `subnet_ids` estiver vazio, o modulo usa a VPC defa
 | `allowed_azs` | `list(string)` | `["us-east-1a", "us-east-1b"]` | AZs permitidas para as subnets do control plane. |
 | `vpc_id` | `string` | `""` | ID da VPC do cluster. Se vazio, usa a VPC default. |
 | `subnet_ids` | `list(string)` | `[]` | Subnets do cluster e node groups. Se vazio, usa subnets da VPC default. |
+| `fargate_subnet_ids` | `list(string)` | `[]` | Subnets privadas para Fargate. Se vazio, usa as privadas de `subnet_ids`/default. |
 | `enable_karpenter` | `bool` | `true` | Habilita dependencias IAM e SQS do Karpenter. |
 | `enable_fargate_karpenter` | `bool` | `true` | Cria profile Fargate para o namespace do Karpenter. |
 | `karpenter_namespace` | `string` | `"karpenter"` | Namespace usado pelo controller do Karpenter no Fargate. |
@@ -80,6 +81,7 @@ module "eks" {
   # Deixe vazio para usar VPC/subnets default
   vpc_id     = ""
   subnet_ids = []
+  fargate_subnet_ids = []
 
   enable_karpenter          = true
   enable_fargate_karpenter  = true
@@ -101,6 +103,7 @@ aws_region   = "us-east-1"
 allowed_azs  = ["us-east-1a", "us-east-1b"]
 vpc_id       = ""
 subnet_ids   = []
+fargate_subnet_ids = []
 
 tags = {
   Environment = "dev"
