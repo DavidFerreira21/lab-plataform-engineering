@@ -4,13 +4,15 @@
 CLUSTER_NAME=dev
 NAMESPACE_ARGO=argocd
 BIN_DIR=/usr/local/bin
+AWS_REGION?=us-east-1
+TF_STATE_BUCKET?=tfstate-terraform-lab-plataform-engineering
 
-.PHONY: all setup cluster install-nginx install-argo bootstrap-argo helm-build status down help
+.PHONY: all-kind setup cluster install-nginx install-argo bootstrap-argo  down help
 
 # ==========================================
 # COMANDO PRINCIPAL
 # ==========================================
-all: setup cluster install-nginx install-argo bootstrap-argo config-bash
+all-kind: setup cluster install-nginx install-argo bootstrap-argo config-bash
 
 help: ## Ajuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -51,6 +53,29 @@ setup: ## Verifica e instala Docker, Kubectl, Kind e Helm
 	else \
 		echo "✅ Helm já está instalado"; \
 	fi
+
+# ==========================================
+# AWS (BOOTSTRAP DO BACKEND)
+# ==========================================
+aws-configure: ## Configura credenciais AWS (aws configure)
+	@aws configure
+
+tf-backend-bootstrap: ## Cria bucket S3 e atualiza backend.tf automaticamente
+	@if ! command -v aws >/dev/null 2>&1; then echo "❌ AWS CLI não encontrado"; exit 1; fi
+	@AWS_REGION=$(AWS_REGION); \
+	if [ -z "$$AWS_REGION" ]; then echo "❌ AWS_REGION vazio"; exit 1; fi; \
+	ACCOUNT_ID=$$(aws sts get-caller-identity --query Account --output text); \
+	BUCKET=$${TF_STATE_BUCKET:-tfstate-$$ACCOUNT_ID-$$AWS_REGION}; \
+	echo "🪣 Criando bucket: $$BUCKET (região $$AWS_REGION)"; \
+	if [ "$$AWS_REGION" = "us-east-1" ]; then \
+		aws s3api create-bucket --bucket $$BUCKET --region $$AWS_REGION; \
+	else \
+		aws s3api create-bucket --bucket $$BUCKET --region $$AWS_REGION --create-bucket-configuration LocationConstraint=$$AWS_REGION; \
+	fi; \
+	aws s3api put-bucket-versioning --bucket $$BUCKET --versioning-configuration Status=Enabled; \
+	aws s3api put-public-access-block --bucket $$BUCKET --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true; \
+	aws s3api put-bucket-encryption --bucket $$BUCKET --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'; \
+	echo "✅ Bucket pronto: $$BUCKET"
 
 # ==========================================
 # PROVISIONAMENTO DO CLUSTER
