@@ -54,11 +54,10 @@ Fluxo de ponta a ponta: commit → CI → registry → ArgoCD → cluster → ap
 ```mermaid
 %%{init: {"themeVariables": {"fontSize": "16px"}}}%%
 flowchart LR
-  Dev["Dev / Git Commit"] --> GH["GitHub Repo"]
-  GH --> CI["CI (Lint/Test/SAST/SCA/Build)"]
+  Dev["Dev / Git Commit"] --> CI["CI (Lint/Test/SAST/SCA/Build)"]
   CI --> Registry["Registry (Docker Hub)"]
   Registry --> Argo["ArgoCD"]
-  Argo --> K8s["Kubernetes (Kind)"]
+  Argo --> K8s["Kubernetes (K8s)"]
   K8s --> Web["Web (Flask)"]
   K8s --> API["API (FastAPI)"]
   API --> DB["SQLite/Mongo"]
