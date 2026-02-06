@@ -134,7 +134,7 @@ flowchart LR
 - **ArgoCD com `sources` múltiplos**: uma única Application gerencia API e Web; em produção pode ser interessante separar Applications por serviço.
 
 ## Como rodar localmente (atalho)
-- Plataforma/cluster: `make all` (ver detalhes em `plataforma/README.md`)
+- Plataforma/cluster: `make all-kind` (ver detalhes em `plataforma/README.md`)
 - Apps localmente: ver `app/README.md`
 
 ## Makefile (comandos principais)

@@ -12,7 +12,7 @@ variable "aws_region" {
 variable "cluster_version" {
   type        = string
   description = "Kubernetes version."
-  default     = "1.29"
+  default     = "1.35"
 }
 
 variable "allowed_azs" {
