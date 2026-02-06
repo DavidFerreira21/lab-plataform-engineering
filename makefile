@@ -64,8 +64,7 @@ tf-backend-bootstrap: ## Cria bucket S3 e atualiza backend.tf automaticamente
 	@if ! command -v aws >/dev/null 2>&1; then echo "❌ AWS CLI não encontrado"; exit 1; fi
 	@AWS_REGION=$(AWS_REGION); \
 	if [ -z "$$AWS_REGION" ]; then echo "❌ AWS_REGION vazio"; exit 1; fi; \
-	ACCOUNT_ID=$$(aws sts get-caller-identity --query Account --output text); \
-	BUCKET=$${TF_STATE_BUCKET:-tfstate-$$ACCOUNT_ID-$$AWS_REGION}; \
+	BUCKET=$(TF_STATE_BUCKET); \
 	echo "🪣 Criando bucket: $$BUCKET (região $$AWS_REGION)"; \
 	if [ "$$AWS_REGION" = "us-east-1" ]; then \
 		aws s3api create-bucket --bucket $$BUCKET --region $$AWS_REGION; \
