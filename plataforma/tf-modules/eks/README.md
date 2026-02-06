@@ -39,6 +39,7 @@ Se `vpc_id` estiver vazio ou `subnet_ids` estiver vazio, o modulo usa a VPC defa
 | `cluster_name` | `string` | n/a | Nome do cluster EKS. |
 | `aws_region` | `string` | `"us-east-1"` | Regiao AWS para os providers. |
 | `cluster_version` | `string` | `"1.29"` | Versao do Kubernetes. |
+| `allowed_azs` | `list(string)` | `["us-east-1a", "us-east-1b"]` | AZs permitidas para as subnets do control plane. |
 | `vpc_id` | `string` | `""` | ID da VPC do cluster. Se vazio, usa a VPC default. |
 | `subnet_ids` | `list(string)` | `[]` | Subnets do cluster e node groups. Se vazio, usa subnets da VPC default. |
 | `enable_karpenter` | `bool` | `true` | Habilita dependencias IAM e SQS do Karpenter. |
@@ -74,6 +75,7 @@ module "eks" {
   cluster_name    = "lab-eks"
   aws_region      = "us-east-1"
   cluster_version = "1.29"
+  allowed_azs     = ["us-east-1a", "us-east-1b"]
 
   # Deixe vazio para usar VPC/subnets default
   vpc_id     = ""
@@ -96,6 +98,7 @@ module "eks" {
 ```hcl
 cluster_name = "eks-dev"
 aws_region   = "us-east-1"
+allowed_azs  = ["us-east-1a", "us-east-1b"]
 vpc_id       = ""
 subnet_ids   = []
 

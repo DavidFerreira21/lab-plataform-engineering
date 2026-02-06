@@ -7,6 +7,14 @@ data "aws_subnets" "default" {
     name   = "vpc-id"
     values = [local.vpc_id_effective]
   }
+
+  dynamic "filter" {
+    for_each = length(var.allowed_azs) > 0 ? [1] : []
+    content {
+      name   = "availability-zone"
+      values = var.allowed_azs
+    }
+  }
 }
 
 locals {

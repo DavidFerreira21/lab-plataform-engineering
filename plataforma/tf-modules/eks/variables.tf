@@ -15,6 +15,12 @@ variable "cluster_version" {
   default     = "1.29"
 }
 
+variable "allowed_azs" {
+  type        = list(string)
+  description = "Allowed availability zones for control plane subnets."
+  default     = ["us-east-1a", "us-east-1b"]
+}
+
 variable "vpc_id" {
   type        = string
   description = "VPC id for the cluster."
