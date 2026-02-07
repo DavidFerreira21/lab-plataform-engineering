@@ -6,13 +6,31 @@ NAMESPACE_ARGO=argocd
 BIN_DIR=/usr/local/bin
 AWS_REGION?=us-east-1
 TF_STATE_BUCKET?=tfstate-terraform-lab-plataform-engineering
+EKS_BOOTSTRAP?=./eks-bootstrap.sh
+KARPENTER_NAMESPACE?=karpenter
+KARPENTER_VERSION?=1.8.6
+KARPENTER_CONTROLLER_ROLE_NAME?=
+KARPENTER_CONTROLLER_ROLE_ARN?=
+PLATFORM?=kind
 
-.PHONY: all-kind setup cluster install-nginx install-argo bootstrap-argo  down help
+.PHONY: all-kind all-eks setup cluster-kind install-nginx-kind install-nginx-eks install-argo bootstrap-argo down down-eks help aws-configure tf-backend-bootstrap eks-bootstrap
 
 # ==========================================
 # COMANDO PRINCIPAL
 # ==========================================
-all-kind: setup cluster install-nginx install-argo bootstrap-argo config-bash
+all-kind: setup cluster-kind install-nginx-kind install-argo bootstrap-argo config-bash
+
+# ==========================================
+# EKS (AWS CLI)
+# ==========================================
+all-eks:
+	@$(MAKE) eks-bootstrap
+	@$(MAKE) install-nginx-eks
+	@$(MAKE) install-argo
+	@$(MAKE) bootstrap-argo PLATFORM=eks
+
+eks-bootstrap: ## Cria cluster EKS + managed node group via AWS CLI
+	@$(EKS_BOOTSTRAP)
 
 help: ## Ajuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -79,7 +97,7 @@ tf-backend-bootstrap: ## Cria bucket S3 e atualiza backend.tf automaticamente
 # ==========================================
 # PROVISIONAMENTO DO CLUSTER
 # ==========================================
-cluster: ## Cria o cluster Kind se não existir
+cluster-kind: ## Cria o cluster Kind se não existir
 	@echo "🏗️ Verificando cluster Kind..."
 	@if ! kind get clusters | grep -q "^$(CLUSTER_NAME)$$"; then \
 		if [ ! -f kind-config.yaml ]; then echo "❌ Erro: kind-config.yaml não encontrado!"; exit 1; fi; \
@@ -89,7 +107,7 @@ cluster: ## Cria o cluster Kind se não existir
 	fi
 
 
-install-nginx: ## Instala e configura o Nginx Ingress para Kind
+install-nginx-kind: ## Instala e configura o Nginx Ingress para Kind
 	@echo "🌐 Instalando Nginx Ingress Controller..."
 	@kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 	@echo "🛠️ Aplicando patches para rodar no Kind..."
@@ -97,22 +115,41 @@ install-nginx: ## Instala e configura o Nginx Ingress para Kind
 	@kubectl -n ingress-nginx patch deploy ingress-nginx-controller --type='json' -p='[{"op":"add","path":"/spec/template/spec/containers/0/ports/0/hostPort","value":80},{"op":"add","path":"/spec/template/spec/containers/0/ports/1/hostPort","value":443}]'
 	@echo "⏳ Aguardando Nginx ficar pronto (isso pode levar uns minutos)..."
 	@kubectl wait --namespace ingress-nginx --for=condition=Ready pod --selector=app.kubernetes.io/component=controller --timeout=180s
+
+install-nginx-eks: ## Instala Nginx Ingress no EKS (provider AWS)
+	@echo "🌐 Instalando Nginx Ingress Controller no EKS..."
+	@kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/aws/deploy.yaml
+	@echo "⏳ Aguardando Nginx ficar pronto (isso pode levar uns minutos)..."
+	@kubectl wait --namespace ingress-nginx --for=condition=Ready pod --selector=app.kubernetes.io/component=controller --timeout=180s
+
 # ==========================================
 # GITOPS (ARGO CD)
 # ==========================================
 install-argo: ## Instalação do ArgoCD
 	@echo "🐙 Instalando ArgoCD..."
 	@kubectl create namespace $(NAMESPACE_ARGO) || true
-	@kubectl apply --server-side -n $(NAMESPACE_ARGO) -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+	@if [ "$(PLATFORM)" = "eks" ]; then \
+		kubectl apply --server-side -n $(NAMESPACE_ARGO) -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml; \
+	else \
+		kubectl apply --server-side -n $(NAMESPACE_ARGO) -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml; \
+	fi
 	@echo "⏳ Aguardando ArgoCD..."
-	@kubectl wait --namespace $(NAMESPACE_ARGO) --for=condition=Ready pod --selector=app.kubernetes.io/name=argocd-server --timeout=180s
+	@kubectl -n $(NAMESPACE_ARGO) rollout status deploy/argocd-server --timeout=300s || true
+	@kubectl -n $(NAMESPACE_ARGO) rollout status deploy/argocd-repo-server --timeout=300s || true
+	@kubectl -n $(NAMESPACE_ARGO) rollout status sts/argocd-application-controller --timeout=300s || true
 
 bootstrap-argo: ## Conecta o Argo ao Monorepo
 	@echo "🏗️ Aplicando configurações de GitOps..."
 	@kubectl apply -f plataforma/argo/application.yaml
-	@kubectl apply -f plataforma/argo/ingress.yaml || echo "⚠️ Ingress do Argo não aplicado."
+	@if [ "$(PLATFORM)" = "eks" ]; then \
+		kubectl apply -f plataforma/argo/ingress-eks.yaml; \
+	else \
+		kubectl apply -f plataforma/argo/ingress.yaml; \
+	fi
 	@echo "🔑 Senha Admin ArgoCD:"
 	@kubectl -n $(NAMESPACE_ARGO) get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+	@echo "🌐 NLB/ELB do Ingress:"
+	@kubectl -n ingress-nginx get svc ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"; echo
 
 # ==========================================
 # TERMINAL E CLEANUP
@@ -124,6 +161,19 @@ config-bash: ## Melhora a experiência no terminal
 down: ## Destrói tudo
 	@kind delete cluster --name $(CLUSTER_NAME)
 
+down-eks: ## Remove o cluster EKS e o node group (AWS CLI)
+	@if [ -z "$(AWS_REGION)" ]; then echo "❌ AWS_REGION vazio"; exit 1; fi
+	@EKS_NAME=$(EKS_CLUSTER_NAME); \
+	if [ -z "$$EKS_NAME" ]; then EKS_NAME=$(CLUSTER_NAME); fi; \
+	echo "🧹 Removendo node group tools..."; \
+	aws eks delete-nodegroup --region $(AWS_REGION) --cluster-name $$EKS_NAME --nodegroup-name tools >/dev/null 2>&1 || true; \
+	echo "⏳ Aguardando node group remover..."; \
+	aws eks wait nodegroup-deleted --region $(AWS_REGION) --cluster-name $$EKS_NAME --nodegroup-name tools >/dev/null 2>&1 || true; \
+	echo "🧹 Removendo cluster EKS..."; \
+	aws eks delete-cluster --region $(AWS_REGION) --name $$EKS_NAME; \
+	echo "⏳ Aguardando cluster remover..."; \
+	aws eks wait cluster-deleted --region $(AWS_REGION) --name $$EKS_NAME
+
 status: ## Status resumido
 	@kubectl cluster-info
 	@kubectl get pods -A
@@ -132,3 +182,4 @@ helm-build: ## Atualiza dependências Helm (api + web)
 	@helm dependency build gitops/app
 	@helm dependency build gitops/web
 	@echo "✅ Dependências atualizadas."
+EKS_CLUSTER_NAME?=eks-dev
