@@ -9,6 +9,7 @@ plataforma/
 ├── argo/
 │   ├── application.yaml      # Application com múltiplas sources (API e Web)
 │   └── ingress.yaml          # Ingress do ArgoCD
+├── bootstrap/                # Terraform bootstrap (raiz + módulos)
 ├── minio/
 │   └── minio.yaml             # MinIO local (S3 compatível)
 └── charts/
