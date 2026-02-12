@@ -171,10 +171,11 @@ install-argo: ## Instalação do ArgoCD
 
 bootstrap-argo: ## Conecta o Argo ao Monorepo
 	@echo "🏗️ Aplicando configurações de GitOps..."
-	@kubectl apply -f plataforma/argo/application.yaml
 	@if [ "$(PLATFORM)" = "eks" ]; then \
+		kubectl apply -f plataforma/argo/application-eks.yaml; \
 		kubectl apply -f plataforma/argo/ingress-eks.yaml; \
 	else \
+		kubectl apply -f plataforma/argo/application-kind.yaml; \
 		kubectl apply -f plataforma/argo/ingress.yaml; \
 	fi
 	@echo "🔑 Senha Admin ArgoCD:"

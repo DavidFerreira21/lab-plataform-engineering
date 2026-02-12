@@ -28,16 +28,23 @@ S3_USE_SSL = os.getenv("S3_USE_SSL", "false").lower() == "true"
 
 
 def get_s3_client():
-    if not S3_ACCESS_KEY or not S3_SECRET_KEY:
-        raise RuntimeError("S3 credentials not configured")
-    return boto3.client(
-        "s3",
-        endpoint_url=S3_ENDPOINT,
-        aws_access_key_id=S3_ACCESS_KEY,
-        aws_secret_access_key=S3_SECRET_KEY,
-        region_name=S3_REGION,
-        use_ssl=S3_USE_SSL,
-    )
+    client_kwargs = {
+        "endpoint_url": S3_ENDPOINT,
+        "region_name": S3_REGION,
+        "use_ssl": S3_USE_SSL,
+    }
+
+    if S3_ACCESS_KEY and S3_SECRET_KEY:
+        client_kwargs["aws_access_key_id"] = S3_ACCESS_KEY
+        client_kwargs["aws_secret_access_key"] = S3_SECRET_KEY
+    else:
+        log_json(
+            logging.INFO,
+            "s3_auth_fallback",
+            detail="Using boto3 default credential chain (e.g. IRSA)",
+        )
+
+    return boto3.client("s3", **client_kwargs)
 
 
 def log_json(level, message, **fields):
