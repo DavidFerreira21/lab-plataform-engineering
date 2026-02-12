@@ -134,17 +134,23 @@ flowchart LR
 
 ## Como rodar localmente (atalho)
 - Plataforma/cluster: `make all-kind` (ver detalhes em `plataforma/README.md`)
+- Plataforma na AWS/EKS: `make all-eks`
 - Apps localmente: ver `app/README.md`
 
 ## Makefile (comandos principais)
-O `makefile` padroniza o setup da **plataforma base local** do lab e serve como pré-requisito para rodar o ambiente (Kind, Nginx Ingress e ArgoCD) de forma reproduzível.
+O `makefile` padroniza o setup da plataforma local (Kind) e da plataforma AWS (EKS), incluindo bootstrap de Terraform state e configuração de contexto Kubernetes.
 - `make setup` instala Docker/Kubectl/Kind/Helm
-- `make cluster` cria o cluster Kind (usa `kind-config.yaml`)
-- `make install-nginx` instala o Nginx Ingress
+- `make all-kind` cria cluster Kind + ingress + ArgoCD + bootstrap GitOps
+- `make cluster-kind` cria o cluster Kind (usa `kind-config.yaml`)
+- `make install-nginx-kind` instala o Nginx Ingress no Kind
+- `make all-eks` executa fluxo EKS completo (bucket state, Terraform, kubecontext, ingress e ArgoCD)
+- `make tf-backend-bootstrap` cria o bucket S3 do Terraform state (`tfstate-terraform-lab-plataform-engineering`)
+- `make cluster-eks` roda `terraform init/apply` em `plataforma/bootstrap` e atualiza o `kubeconfig`
+- Backend do Terraform no bootstrap usa lock nativo em S3 (`use_lockfile = true`, sem DynamoDB)
 - `make install-argo` instala o ArgoCD
 - `make bootstrap-argo` aplica Application e Ingress do ArgoCD
-- `make status` mostra status do cluster
 - `make down` remove o cluster
+- `make down-eks` remove cluster EKS + node group via AWS CLI
 
 ## Observações importantes
 - Os charts de `gitops/app` e `gitops/web` usam o chart base `plataforma/charts/app-template` como dependência.

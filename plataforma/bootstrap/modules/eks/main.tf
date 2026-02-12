@@ -109,6 +109,10 @@ resource "aws_eks_cluster" "this" {
   role_arn = aws_iam_role.cluster.arn
   version  = var.kubernetes_version
 
+  access_config {
+    authentication_mode = "API_AND_CONFIG_MAP"
+  }
+
   enabled_cluster_log_types = var.cluster_log_types
 
   vpc_config {
@@ -216,6 +220,8 @@ resource "aws_eks_access_policy_association" "this" {
     type       = each.value.scope_type
     namespaces = each.value.namespaces
   }
+
+  depends_on = [aws_eks_access_entry.this]
 }
 
 resource "aws_eks_addon" "this" {
