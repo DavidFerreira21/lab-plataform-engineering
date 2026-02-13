@@ -1,3 +1,7 @@
+##############################################
+# IAM base do cluster e node group
+##############################################
+
 resource "aws_iam_role" "cluster" {
   name               = var.cluster_role_name
   assume_role_policy = data.aws_iam_policy_document.cluster_trust.json
@@ -38,26 +42,30 @@ resource "aws_iam_role_policy_attachment" "node_ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+##############################################
+# KMS opcional para criptografia de secrets
+##############################################
+
 resource "aws_kms_key" "eks" {
-  count       = var.enable_encryption && (var.kms_key_arn == null || var.kms_key_arn == "") ? 1 : 0
-  description = "EKS secrets encryption key"
+  count               = var.enable_encryption ? 1 : 0
+  description         = "EKS secrets encryption key"
   enable_key_rotation = true
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid      = "AllowRoot"
-        Effect   = "Allow"
+        Sid       = "AllowRoot"
+        Effect    = "Allow"
         Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
-        Action   = "kms:*"
-        Resource = "*"
+        Action    = "kms:*"
+        Resource  = "*"
       },
       {
-        Sid      = "AllowEKS"
-        Effect   = "Allow"
+        Sid       = "AllowEKS"
+        Effect    = "Allow"
         Principal = { Service = "eks.amazonaws.com" }
-        Action   = [
+        Action = [
           "kms:Encrypt",
           "kms:Decrypt",
           "kms:ReEncrypt*",
@@ -73,11 +81,7 @@ resource "aws_kms_key" "eks" {
 }
 
 locals {
-  effective_kms_key_arn = (
-    var.kms_key_arn != null && var.kms_key_arn != ""
-    ? var.kms_key_arn
-    : (length(aws_kms_key.eks) > 0 ? aws_kms_key.eks[0].arn : null)
-  )
+  effective_kms_key_arn = length(aws_kms_key.eks) > 0 ? aws_kms_key.eks[0].arn : null
   subnet_vpc_match = alltrue([
     for s in data.aws_subnet.selected : s.vpc_id == var.vpc_id
   ])
@@ -103,6 +107,10 @@ locals {
   }
   addon_names = ["vpc-cni", "coredns", "kube-proxy"]
 }
+
+##############################################
+# Recursos EKS: cluster, node group e addons
+##############################################
 
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
@@ -153,11 +161,22 @@ resource "aws_eks_cluster" "this" {
     }
     precondition {
       condition     = var.enable_encryption ? (local.effective_kms_key_arn != null && local.effective_kms_key_arn != "") : true
-      error_message = "KMS key ARN is required or must be created when enable_encryption is true."
+      error_message = "KMS key must be created when enable_encryption is true."
     }
   }
 
   tags = var.tags
+}
+
+resource "aws_iam_openid_connect_provider" "this" {
+  count = var.enable_oidc_provider ? 1 : 0
+
+  url             = aws_eks_cluster.this.identity[0].oidc[0].issuer
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.eks_oidc.certificates[0].sha1_fingerprint]
+  tags            = var.tags
+
+  depends_on = [aws_eks_cluster.this]
 }
 
 resource "aws_eks_node_group" "this" {
@@ -187,7 +206,7 @@ resource "aws_eks_node_group" "this" {
   }
 
   update_config {
-    max_unavailable = var.update_max_unavailable
+    max_unavailable            = var.update_max_unavailable
     max_unavailable_percentage = var.update_max_unavailable_percentage
   }
 

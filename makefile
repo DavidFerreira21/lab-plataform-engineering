@@ -13,8 +13,9 @@ KARPENTER_CONTROLLER_ROLE_NAME?=
 KARPENTER_CONTROLLER_ROLE_ARN?=
 PLATFORM?=kind
 EKS_CLUSTER_NAME?=eks-dev
+EKS_NODEGROUP_NAME?=tools
 	
-.PHONY: all-kind all-eks setup cluster-kind cluster-eks install-nginx-kind install-nginx-eks install-argo bootstrap-argo down down-eks help aws-configure tf-backend-bootstrap tf-eks-init tf-eks-apply eks-configure-context show-hosts
+.PHONY: all-kind all-eks setup cluster-kind cluster-eks install-nginx-kind install-nginx-eks install-argo bootstrap-argo down down-eks help aws-configure tf-backend-bootstrap tf-eks-init tf-eks-apply eks-configure-context show-hosts helm-build irsa-values-auto
 
 # ==========================================
 # COMANDO PRINCIPAL
@@ -32,8 +33,11 @@ all-kind:
 # EKS (Terraform + AWS CLI)
 # ==========================================
 all-eks:
+	@$(MAKE) setup
 	@$(MAKE) tf-backend-bootstrap
 	@$(MAKE) cluster-eks
+	@$(MAKE) irsa-values-auto
+	@$(MAKE) helm-build
 	@$(MAKE) install-nginx-eks
 	@$(MAKE) install-argo PLATFORM=eks
 	@$(MAKE) bootstrap-argo PLATFORM=eks
@@ -48,7 +52,9 @@ tf-eks-init: ## Executa terraform init em plataforma/bootstrap
 
 tf-eks-apply: ## Executa terraform apply em plataforma/bootstrap
 	@if ! command -v terraform >/dev/null 2>&1; then echo "❌ Terraform não encontrado"; exit 1; fi
-	@echo "🚀 Terraform apply em $(TF_BOOTSTRAP_DIR)..."
+	@echo "🚀 Terraform apply (fase 1: EKS) em $(TF_BOOTSTRAP_DIR)..."
+	@cd $(TF_BOOTSTRAP_DIR) && terraform apply -auto-approve -target=module.eks
+	@echo "🚀 Terraform apply (fase 2: recursos dependentes do cluster) em $(TF_BOOTSTRAP_DIR)..."
 	@cd $(TF_BOOTSTRAP_DIR) && terraform apply -auto-approve
 
 eks-configure-context: ## Atualiza kubeconfig para o cluster EKS criado pelo Terraform
@@ -176,7 +182,7 @@ bootstrap-argo: ## Conecta o Argo ao Monorepo
 		kubectl apply -f plataforma/argo/ingress-eks.yaml; \
 	else \
 		kubectl apply -f plataforma/argo/application-kind.yaml; \
-		kubectl apply -f plataforma/argo/ingress.yaml; \
+		kubectl apply -f plataforma/argo/ingress-kind.yaml; \
 	fi
 	@echo "🔑 Senha Admin ArgoCD:"
 	@kubectl -n $(NAMESPACE_ARGO) get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
@@ -222,17 +228,32 @@ down-eks: ## Remove o cluster EKS e o node group (AWS CLI)
 	@if [ -z "$(AWS_REGION)" ]; then echo "❌ AWS_REGION vazio"; exit 1; fi
 	@EKS_NAME=$(EKS_CLUSTER_NAME); \
 	if [ -z "$$EKS_NAME" ]; then EKS_NAME=$(CLUSTER_NAME); fi; \
-	echo "🧹 Removendo node group tools..."; \
-	aws eks delete-nodegroup --region $(AWS_REGION) --cluster-name $$EKS_NAME --nodegroup-name tools >/dev/null 2>&1 || true; \
+	echo "🧹 Removendo node group $(EKS_NODEGROUP_NAME)..."; \
+	aws eks delete-nodegroup --region $(AWS_REGION) --cluster-name $$EKS_NAME --nodegroup-name $(EKS_NODEGROUP_NAME) >/dev/null 2>&1 || true; \
 	echo "⏳ Aguardando node group remover..."; \
-	aws eks wait nodegroup-deleted --region $(AWS_REGION) --cluster-name $$EKS_NAME --nodegroup-name tools >/dev/null 2>&1 || true; \
+	aws eks wait nodegroup-deleted --region $(AWS_REGION) --cluster-name $$EKS_NAME --nodegroup-name $(EKS_NODEGROUP_NAME) >/dev/null 2>&1 || true; \
 	echo "🧹 Removendo cluster EKS..."; \
 	aws eks delete-cluster --region $(AWS_REGION) --name $$EKS_NAME; \
 	echo "⏳ Aguardando cluster remover..."; \
 	aws eks wait cluster-deleted --region $(AWS_REGION) --name $$EKS_NAME
 
-helm-build: ## Atualiza dependências Helm (api + web)
+helm-build: ## Atualiza dependências Helm (apps + claims Crossplane)
 	@echo "⛵ Atualizando dependências Helm..."
 	@helm dependency build gitops/app
 	@helm dependency build gitops/web
+	@helm dependency build gitops/storage-bucket
+	@helm dependency build gitops/cluster-metadata
+	@helm dependency build gitops/iam-policy-app
+	@helm dependency build gitops/irsa-app
 	@echo "✅ Dependências atualizadas."
+
+irsa-values-auto: ## Gera gitops/irsa-app/values.auto.yaml usando SSM/outputs do bootstrap
+	@if ! command -v terraform >/dev/null 2>&1; then echo "❌ Terraform não encontrado"; exit 1; fi
+	@if ! command -v aws >/dev/null 2>&1; then echo "❌ AWS CLI não encontrado"; exit 1; fi
+	@BASE_PATH=$$(cd $(TF_BOOTSTRAP_DIR) && terraform output -raw cluster_metadata_ssm_base_path 2>/dev/null); \
+	if [ -z "$$BASE_PATH" ]; then echo "❌ cluster_metadata_ssm_base_path vazio. Verifique enable_cluster_metadata_ssm=true."; exit 1; fi; \
+	OIDC_PROVIDER_ARN=$$(aws ssm get-parameter --region $(AWS_REGION) --name "$$BASE_PATH/oidc/provider_arn" --query 'Parameter.Value' --output text); \
+	OIDC_ISSUER_HOSTPATH=$$(aws ssm get-parameter --region $(AWS_REGION) --name "$$BASE_PATH/oidc/issuer_hostpath" --query 'Parameter.Value' --output text); \
+	ACCOUNT_ID=$$(aws ssm get-parameter --region $(AWS_REGION) --name "$$BASE_PATH/account/id" --query 'Parameter.Value' --output text 2>/dev/null || aws sts get-caller-identity --query Account --output text); \
+	printf 'crossplane-irsa-claim:\n  claim:\n    oidcProviderArn: "%s"\n    oidcIssuerHostpath: "%s"\n    policyArn: "arn:aws:iam::%s:policy/api-storage-policy"\n' "$$OIDC_PROVIDER_ARN" "$$OIDC_ISSUER_HOSTPATH" "$$ACCOUNT_ID" > gitops/irsa-app/values.auto.yaml
+	@echo "✅ Arquivo gerado: gitops/irsa-app/values.auto.yaml"

@@ -1,3 +1,7 @@
+##############################################
+# Outputs do modulo EKS
+##############################################
+
 output "cluster_name" {
   value       = aws_eks_cluster.this.name
   description = "EKS cluster name"
@@ -11,6 +15,16 @@ output "cluster_endpoint" {
 output "cluster_ca" {
   value       = aws_eks_cluster.this.certificate_authority[0].data
   description = "EKS cluster CA data (base64)"
+}
+
+output "cluster_oidc_issuer" {
+  value       = aws_eks_cluster.this.identity[0].oidc[0].issuer
+  description = "EKS OIDC issuer URL"
+}
+
+output "oidc_provider_arn" {
+  value       = var.enable_oidc_provider ? aws_iam_openid_connect_provider.this[0].arn : null
+  description = "IAM OIDC provider ARN used by IRSA"
 }
 
 output "nodegroup_name" {

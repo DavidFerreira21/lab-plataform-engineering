@@ -1,3 +1,7 @@
+##############################################
+# Configuracao principal do cluster
+##############################################
+
 variable "cluster_name" {
   type        = string
   description = "EKS cluster name"
@@ -23,6 +27,10 @@ variable "cluster_security_group_ids" {
   description = "Additional security group IDs for the EKS control plane"
   default     = null
 }
+
+##############################################
+# Node group
+##############################################
 
 variable "nodegroup_name" {
   type        = string
@@ -83,6 +91,10 @@ variable "node_role_name" {
   description = "IAM role name for EKS nodes"
 }
 
+##############################################
+# Endpoint e observabilidade
+##############################################
+
 variable "endpoint_public_access" {
   type        = bool
   description = "Expose EKS public endpoint"
@@ -105,16 +117,14 @@ variable "cluster_log_types" {
   default     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 }
 
+##############################################
+# Criptografia e tags
+##############################################
+
 variable "enable_encryption" {
   type        = bool
   description = "Enable secrets encryption with KMS"
   default     = false
-}
-
-variable "kms_key_arn" {
-  type        = string
-  description = "KMS key ARN for EKS secrets encryption"
-  default     = null
 }
 
 variable "tags" {
@@ -123,6 +133,10 @@ variable "tags" {
   default     = {}
 }
 
+
+##############################################
+# Atualizacao de node group e addons
+##############################################
 
 variable "update_max_unavailable" {
   type        = number
@@ -152,6 +166,10 @@ variable "addon_versions" {
   default     = {}
 }
 
+##############################################
+# Acesso ao cluster via EKS Access API
+##############################################
+
 variable "enable_cluster_creator_admin" {
   type        = bool
   description = "Grant cluster admin to the Terraform caller"
@@ -173,4 +191,14 @@ variable "access_entries" {
   }))
   description = "Additional EKS access entries"
   default     = []
+}
+
+##############################################
+# OIDC provider para IRSA
+##############################################
+
+variable "enable_oidc_provider" {
+  type        = bool
+  description = "Create IAM OIDC provider for EKS IRSA"
+  default     = true
 }

@@ -1,0 +1,69 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xirsas.platform.lab
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  group: platform.lab
+  names:
+    kind: XIRSA
+    plural: xirsas
+  claimNames:
+    kind: IRSA
+    plural: irsas
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    serviceAccountNamespace:
+                      type: string
+                    serviceAccountName:
+                      type: string
+                    oidcProviderArn:
+                      type: string
+                    oidcIssuerHostpath:
+                      type: string
+                    policyArn:
+                      type: string
+                    deletionPolicy:
+                      type: string
+                      default: Orphan
+                      enum:
+                        - Orphan
+                        - Delete
+                    providerConfigRefName:
+                      type: string
+                      default: default
+                    tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                  required:
+                    - name
+                    - serviceAccountNamespace
+                    - serviceAccountName
+                    - oidcProviderArn
+                    - oidcIssuerHostpath
+                    - policyArn
+              required:
+                - parameters
+            status:
+              type: object
+              properties:
+                roleArn:
+                  type: string
+                roleName:
+                  type: string

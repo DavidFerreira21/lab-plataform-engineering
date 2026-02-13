@@ -1,0 +1,12 @@
+claim:
+  name: app-s3-irsa
+  namespace: app
+  serviceAccountNamespace: app
+  serviceAccountName: api-carro
+  # Populate from bootstrap outputs / SSM parameters
+  oidcProviderArn: "REPLACE_WITH_OIDC_PROVIDER_ARN"
+  oidcIssuerHostpath: "REPLACE_WITH_OIDC_ISSUER_HOSTPATH"
+  policyArn: "REPLACE_WITH_POLICY_ARN"
+  deletionPolicy: Orphan
+  providerConfigRefName: default
+  tags: {}

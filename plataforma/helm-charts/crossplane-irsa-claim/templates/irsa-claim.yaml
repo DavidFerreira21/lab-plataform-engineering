@@ -1,0 +1,20 @@
+apiVersion: platform.lab/v1alpha1
+kind: IRSA
+metadata:
+  name: {{ .Values.claim.name }}
+  namespace: {{ .Values.claim.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  parameters:
+    name: {{ .Values.claim.name | quote }}
+    serviceAccountNamespace: {{ .Values.claim.serviceAccountNamespace | quote }}
+    serviceAccountName: {{ .Values.claim.serviceAccountName | quote }}
+    oidcProviderArn: {{ .Values.claim.oidcProviderArn | quote }}
+    oidcIssuerHostpath: {{ .Values.claim.oidcIssuerHostpath | quote }}
+    policyArn: {{ .Values.claim.policyArn | quote }}
+    deletionPolicy: {{ .Values.claim.deletionPolicy | quote }}
+    providerConfigRefName: {{ .Values.claim.providerConfigRefName | quote }}
+    tags:
+{{- toYaml .Values.claim.tags | nindent 6 }}

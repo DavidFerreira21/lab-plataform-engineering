@@ -4,4 +4,4 @@ version: 1.0.0
 dependencies:
   - name: app-template
     version: "0.1.0"
-    repository: "file://../../plataforma/charts/app-template/"
+    repository: "file://../../plataforma/helm-charts/app-template/"

@@ -1,0 +1,57 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xs3s.platform.lab
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  group: platform.lab
+  names:
+    kind: XS3
+    plural: xs3s
+  claimNames:
+    kind: S3
+    plural: s3s
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    region:
+                      type: string
+                      default: us-east-1
+                    deletionPolicy:
+                      type: string
+                      default: Orphan
+                      enum:
+                        - Orphan
+                        - Delete
+                    tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    providerConfigRefName:
+                      type: string
+                      default: default
+                  required:
+                    - name
+              required:
+                - parameters
+            status:
+              type: object
+              properties:
+                bucketName:
+                  type: string
+                bucketArn:
+                  type: string

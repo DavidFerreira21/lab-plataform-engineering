@@ -1,0 +1,16 @@
+apiVersion: platform.lab/v1alpha1
+kind: S3
+metadata:
+  name: {{ .Values.claim.name }}
+  namespace: {{ .Values.claim.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  parameters:
+    name: {{ .Values.claim.name | quote }}
+    region: {{ .Values.claim.region | quote }}
+    deletionPolicy: {{ .Values.claim.deletionPolicy | quote }}
+    providerConfigRefName: {{ .Values.claim.providerConfigRefName | quote }}
+    tags:
+{{- toYaml .Values.claim.tags | nindent 6 }}

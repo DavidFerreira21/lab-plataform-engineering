@@ -1,6 +1,6 @@
 dependencies:
 - name: app-template
-  repository: file://../../plataforma/charts/app-template/
+  repository: file://../../plataforma/helm-charts/app-template/
   version: 0.1.0
-digest: sha256:a1174326332f39fe7241ff06521f2dff9ce21c560c407369772b946bd4b168e2
-generated: "2026-02-05T20:42:59.100606336-03:00"
+digest: sha256:45b7f2b65e3e08591f13f2a490a5f3c61a8742ea81e7011f4715c2b413834bf5
+generated: "2026-02-12T21:59:24.026524799-03:00"

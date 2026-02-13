@@ -1,0 +1,13 @@
+external-secrets-ssm-metadata:
+  store:
+    name: aws-parameterstore
+    region: us-east-1
+    serviceAccountNamespace: external-secrets
+    serviceAccountName: external-secrets
+  externalSecret:
+    name: cluster-aws-metadata
+    namespace: app
+    refreshInterval: 1h
+    targetSecretName: cluster-aws-metadata
+    metadataPrefix: /platform/bootstrap
+    clusterName: eks-dev

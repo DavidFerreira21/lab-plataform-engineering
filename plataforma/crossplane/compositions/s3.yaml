@@ -1,0 +1,165 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: s3.aws.platform.lab
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  labels:
+    platform.lab/provider: aws
+spec:
+  compositeTypeRef:
+    apiVersion: platform.lab/v1alpha1
+    kind: XS3
+  resources:
+    - name: bucket
+      base:
+        apiVersion: s3.aws.upbound.io/v1beta1
+        kind: Bucket
+        metadata:
+          annotations:
+            crossplane.io/external-name: ""
+        spec:
+          deletionPolicy: Orphan
+          forProvider:
+            region: us-east-1
+            tags: {}
+          providerConfigRef:
+            name: default
+      patches:
+        - type: CombineFromComposite
+          toFieldPath: metadata.annotations[crossplane.io/external-name]
+          combine:
+            strategy: string
+            string:
+              fmt: "%s-%s-%s"
+            variables:
+              - fromFieldPath: spec.parameters.name
+              - fromFieldPath: spec.parameters.region
+              - fromFieldPath: metadata.uid
+                transforms:
+                  - type: string
+                    string:
+                      type: Regexp
+                      regexp:
+                        match: '^([a-f0-9]{8}).*'
+                        group: 1
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.deletionPolicy
+          toFieldPath: spec.deletionPolicy
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.tags
+          toFieldPath: spec.forProvider.tags
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.providerConfigRefName
+          toFieldPath: spec.providerConfigRef.name
+        - type: ToCompositeFieldPath
+          fromFieldPath: metadata.annotations[crossplane.io/external-name]
+          toFieldPath: status.bucketName
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.arn
+          toFieldPath: status.bucketArn
+
+    - name: bucket-public-access-block
+      base:
+        apiVersion: s3.aws.upbound.io/v1beta1
+        kind: BucketPublicAccessBlock
+        spec:
+          forProvider:
+            blockPublicAcls: true
+            blockPublicPolicy: true
+            ignorePublicAcls: true
+            restrictPublicBuckets: true
+            bucket: ""
+          providerConfigRef:
+            name: default
+      patches:
+        - type: CombineFromComposite
+          toFieldPath: spec.forProvider.bucket
+          combine:
+            strategy: string
+            string:
+              fmt: "%s-%s-%s"
+            variables:
+              - fromFieldPath: spec.parameters.name
+              - fromFieldPath: spec.parameters.region
+              - fromFieldPath: metadata.uid
+                transforms:
+                  - type: string
+                    string:
+                      type: Regexp
+                      regexp:
+                        match: '^([a-f0-9]{8}).*'
+                        group: 1
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.providerConfigRefName
+          toFieldPath: spec.providerConfigRef.name
+
+    - name: bucket-encryption
+      base:
+        apiVersion: s3.aws.upbound.io/v1beta1
+        kind: BucketServerSideEncryptionConfiguration
+        spec:
+          forProvider:
+            bucket: ""
+            rule:
+              - applyServerSideEncryptionByDefault:
+                  - sseAlgorithm: AES256
+          providerConfigRef:
+            name: default
+      patches:
+        - type: CombineFromComposite
+          toFieldPath: spec.forProvider.bucket
+          combine:
+            strategy: string
+            string:
+              fmt: "%s-%s-%s"
+            variables:
+              - fromFieldPath: spec.parameters.name
+              - fromFieldPath: spec.parameters.region
+              - fromFieldPath: metadata.uid
+                transforms:
+                  - type: string
+                    string:
+                      type: Regexp
+                      regexp:
+                        match: '^([a-f0-9]{8}).*'
+                        group: 1
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.providerConfigRefName
+          toFieldPath: spec.providerConfigRef.name
+
+    - name: bucket-versioning
+      base:
+        apiVersion: s3.aws.upbound.io/v1beta1
+        kind: BucketVersioning
+        spec:
+          forProvider:
+            bucket: ""
+            versioningConfiguration:
+              - status: Enabled
+          providerConfigRef:
+            name: default
+      patches:
+        - type: CombineFromComposite
+          toFieldPath: spec.forProvider.bucket
+          combine:
+            strategy: string
+            string:
+              fmt: "%s-%s-%s"
+            variables:
+              - fromFieldPath: spec.parameters.name
+              - fromFieldPath: spec.parameters.region
+              - fromFieldPath: metadata.uid
+                transforms:
+                  - type: string
+                    string:
+                      type: Regexp
+                      regexp:
+                        match: '^([a-f0-9]{8}).*'
+                        group: 1
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.providerConfigRefName
+          toFieldPath: spec.providerConfigRef.name

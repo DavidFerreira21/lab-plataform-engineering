@@ -1,0 +1,15 @@
+crossplane-irsa-claim:
+  claim:
+    name: api-storage-irsa
+    namespace: app
+    serviceAccountNamespace: app
+    serviceAccountName: api-carro
+    # Estes campos sao sobrescritos por values.auto.yaml (gerado via make irsa-values-auto).
+    oidcProviderArn: "PENDING_AUTO"
+    oidcIssuerHostpath: "PENDING_AUTO"
+    policyArn: "PENDING_AUTO"
+    deletionPolicy: Orphan
+    providerConfigRefName: default
+    tags:
+      owner: api
+      environment: eks

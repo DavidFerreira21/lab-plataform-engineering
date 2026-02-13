@@ -1,0 +1,6 @@
+apiVersion: v2
+name: external-secrets-ssm-metadata
+description: External Secrets resources to mirror cluster metadata from SSM
+type: application
+version: 0.1.0
+appVersion: "1.0"

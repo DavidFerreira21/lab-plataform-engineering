@@ -1,0 +1,6 @@
+dependencies:
+- name: crossplane-s3-claim
+  repository: file://../../plataforma/helm-charts/crossplane-s3-claim
+  version: 0.1.0
+digest: sha256:5666489bcc172936af00a92a9cebfd4de77cf01aba767cd0476987356cfe88bf
+generated: "2026-02-12T21:59:25.066157583-03:00"

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: crossplane-irsa-claim
+description: Reusable Crossplane IRSA claim chart
+type: application
+version: 0.1.0
+appVersion: "1.0"

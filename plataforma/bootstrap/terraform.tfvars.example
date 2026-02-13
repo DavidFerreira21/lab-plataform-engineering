@@ -1,0 +1,106 @@
+# #############################################
+# Exemplo de valores para bootstrap EKS
+# #############################################
+
+aws_region         = "us-east-1"
+cluster_name       = "eks-dev"
+kubernetes_version = "1.35"
+allowed_azs        = ["us-east-1a", "us-east-1b"]
+
+# #############################################
+# Rede
+# #############################################
+
+use_default_vpc = true
+
+# Quando use_default_vpc = true, vpc_id/subnet_ids podem ficar null
+vpc_id     = null
+subnet_ids = null
+
+# Quando use_default_vpc = false, informe explicitamente:
+# vpc_id     = "vpc-xxxxxxxx"
+# subnet_ids = ["subnet-aaaa", "subnet-bbbb"]
+
+# Opcional: SGs extras no control plane
+cluster_security_group_ids = null
+
+# #############################################
+# Node group
+# #############################################
+
+nodegroup_name      = "tools"
+node_instance_types = ["t3.medium"]
+node_min_size       = 2
+node_max_size       = 2
+node_desired_size   = 2
+node_disk_size      = 20
+node_capacity_type  = "ON_DEMAND"
+node_labels         = { workload = "tools" }
+node_taints         = []
+
+cluster_role_name = "eks-cluster-role"
+node_role_name    = "eks-node-role"
+
+# #############################################
+# Endpoint / Logs / KMS / Tags
+# #############################################
+
+endpoint_public_access  = true
+endpoint_private_access = false
+public_access_cidrs     = ["0.0.0.0/0"]
+
+cluster_log_types  = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+enable_encryption  = false
+tags               = { environment = "dev", owner = "platform" }
+
+update_max_unavailable            = 1
+update_max_unavailable_percentage = null
+
+enable_addons   = true
+addon_versions  = {}
+
+# #############################################
+# EKS Access API
+# #############################################
+
+enable_cluster_creator_admin = true
+cluster_creator_arn          = null
+access_entries               = []
+
+# #############################################
+# OIDC para IRSA (fica no module EKS)
+# #############################################
+
+enable_eks_oidc_provider = true
+
+# #############################################
+# Crossplane + IRSA do provider-aws
+# #############################################
+
+enable_crossplane               = true
+crossplane_namespace            = "crossplane-system"
+crossplane_chart_version        = "1.16.0"
+
+enable_crossplane_irsa                   = true
+crossplane_irsa_namespace                = "crossplane-system"
+crossplane_irsa_service_account          = "provider-aws"
+crossplane_irsa_role_name                = ""
+enable_crossplane_irsa_serviceaccount_sync = true
+
+# #############################################
+# External Secrets
+# #############################################
+
+enable_external_secrets       = true
+external_secrets_namespace    = "external-secrets"
+external_secrets_chart_version = "0.14.4"
+enable_external_secrets_irsa = true
+external_secrets_irsa_service_account = "external-secrets"
+external_secrets_irsa_role_name = ""
+
+# #############################################
+# SSM Parameter Store (metadados do cluster)
+# #############################################
+
+enable_cluster_metadata_ssm = true
+cluster_metadata_ssm_prefix = "/platform/bootstrap"

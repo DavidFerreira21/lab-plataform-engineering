@@ -67,7 +67,7 @@ flowchart LR
 
 
 ## CI/CD (resumo)
-O CI roda por pasta (`app/api/**` e `app/web/**`) com **Ruff/Black**, **Pytest**, Bandit, Trivy e Buildpacks. O CD usa ArgoCD para aplicar `plataforma/argo/application.yaml` (via `make bootstrap-argo`) e sincronizar os Helm charts em `gitops/`.
+O CI roda por pasta (`app/api/**` e `app/web/**`) com **Ruff/Black**, **Pytest**, Bandit, Trivy e Buildpacks. O CD usa ArgoCD para aplicar `plataforma/argo/application-kind.yaml` (via `make bootstrap-argo`) e sincronizar os Helm charts em `gitops/`.
 
 ## Esteira CI (visão rápida)
 Implementação: `.github/workflows/python-app-template.yml`.
@@ -153,7 +153,7 @@ O `makefile` padroniza o setup da plataforma local (Kind) e da plataforma AWS (E
 - `make down-eks` remove cluster EKS + node group via AWS CLI
 
 ## Observações importantes
-- Os charts de `gitops/app` e `gitops/web` usam o chart base `plataforma/charts/app-template` como dependência.
+- Os charts de `gitops/app` e `gitops/web` usam o chart base `plataforma/helm-charts/app-template` como dependência.
 - Sempre que o chart base muda, é necessário rodar:
   - `helm dependency build gitops/app`
   - `helm dependency build gitops/web`

@@ -7,26 +7,37 @@ Esta pasta contém a camada de plataforma do lab: **GitOps com ArgoCD**, **chart
 ```text
 plataforma/
 ├── argo/
-│   ├── application.yaml      # Application com múltiplas sources (API e Web)
-│   └── ingress.yaml          # Ingress do ArgoCD
+│   ├── application-kind.yaml # Application do ambiente Kind
+│   ├── application-eks.yaml  # Application do ambiente EKS
+│   ├── ingress-kind.yaml     # Ingress do ArgoCD (Kind)
+│   └── ingress-eks.yaml      # Ingress do ArgoCD (EKS)
 ├── bootstrap/                # Terraform bootstrap (raiz + módulos)
 ├── minio/
 │   └── minio.yaml             # MinIO local (S3 compatível)
-└── charts/
-    └── app-template/         # Chart base compartilhado pelas apps
+└── helm-charts/
+    ├── app-template/         # Chart base compartilhado pelas apps
+    ├── crossplane-s3-claim/  # Chart base do claim S3 (Crossplane)
+    ├── crossplane-iam-policy-claim/ # Chart base do claim IAM Policy
+    ├── crossplane-irsa-claim/ # Chart base do claim IRSA
+    └── external-secrets-ssm-metadata/ # SSM -> Secret (metadados do cluster)
 ```
 
 ## ArgoCD (GitOps)
 
 ### Application
-Arquivo: `plataforma/argo/application.yaml`
-- Usa `sources` (plural) para API, Web e MinIO
+Arquivos:
+- `plataforma/argo/application-kind.yaml` (API + Web + MinIO)
+- `plataforma/argo/application-eks.yaml` (API + Web + Crossplane/S3 + IAM + IRSA)
 - Cada source possui `helm.releaseName` para evitar conflito de recursos
   - `platform-api` → recursos da API
   - `platform-web` → recursos da Web
+  - `platform-storage` → claim S3
+  - `platform-iam-policy` → claim IAM Policy
+  - `platform-cluster-metadata` → External Secrets (SSM -> Secret)
+  - `platform-irsa` → claim IRSA
 
 ### Ingress do ArgoCD
-Arquivo: `plataforma/argo/ingress.yaml`
+Arquivo: `plataforma/argo/ingress-kind.yaml`
 - Host: `argocd.local`
 - Nginx ingress class (Nginx Ingress Controller)
 - SSL passthrough para o ArgoCD
@@ -34,7 +45,7 @@ Arquivo: `plataforma/argo/ingress.yaml`
 
 ## Helm (chart base)
 
-Chart base: `plataforma/charts/app-template`
+Chart base: `plataforma/helm-charts/app-template`
 - Templates: `deployment.yaml`, `service.yaml`, `ingress.yaml`
 - Template adicional: `hpa.yaml`
 - Suporta:
@@ -65,6 +76,44 @@ Depois commite:
 - `gitops/app/charts/*.tgz`
 - `gitops/web/charts/*.tgz`
 
+Para os charts Crossplane de instância (GitOps), rode também:
+
+```bash
+helm dependency build gitops/storage-bucket
+helm dependency build gitops/cluster-metadata
+helm dependency build gitops/iam-policy-app
+helm dependency build gitops/irsa-app
+```
+
+Depois commite:
+- `gitops/storage-bucket/Chart.lock`
+- `gitops/storage-bucket/charts/*.tgz`
+- `gitops/cluster-metadata/Chart.lock`
+- `gitops/cluster-metadata/charts/*.tgz`
+- `gitops/iam-policy-app/Chart.lock`
+- `gitops/iam-policy-app/charts/*.tgz`
+- `gitops/irsa-app/Chart.lock`
+- `gitops/irsa-app/charts/*.tgz`
+
+## Crossplane IAM/IRSA (automação)
+
+Recursos de plataforma criados no GitOps:
+- `plataforma/crossplane/xrd/iam-policy-xrd.yaml`
+- `plataforma/crossplane/xrd/irsa-xrd.yaml`
+- `plataforma/crossplane/compositions/iam-policy.yaml`
+- `plataforma/crossplane/compositions/irsa.yaml`
+
+Instâncias (claims) via Helm:
+- `gitops/storage-bucket` cria bucket S3.
+- `gitops/iam-policy-app` cria `IAMPolicy` para o bucket.
+- `gitops/cluster-metadata` sincroniza do SSM para Secret (`cluster-aws-metadata`) via External Secrets.
+- `gitops/irsa-app` cria `IRSA` e attach da policy na role.
+
+Importante:
+- O bucket é determinístico (nome definido no claim S3), então a policy já usa o nome esperado.
+- Não é mais necessário editar OIDC/account manualmente: use `make irsa-values-auto` para gerar `gitops/irsa-app/values.auto.yaml` com valores vindos do SSM.
+- O `make all-eks` já executa essa etapa automaticamente antes do bootstrap do Argo.
+
 ## Ambiente local (Kind + Nginx + ArgoCD)
 O `makefile` na raiz automatiza o setup. A lista de comandos principais fica no `README.md` da raiz: [README.md](../README.md).
 
@@ -72,7 +121,7 @@ O `makefile` na raiz automatiza o setup. A lista de comandos principais fica no 
 - O Kind expõe portas 80/443 para o host via `kind-config.yaml`.
 - Para acessar o ArgoCD localmente, use `argocd.local` (ajuste seu `/etc/hosts`).
 - Para o Web, use o host definido em `gitops/web/values.yaml` (ex.: `web.local`).
-- Para fork, edite o `repoURL` em `plataforma/argo/application.yaml` com seu repositório
+- Para fork, edite o `repoURL` em `plataforma/argo/application-kind.yaml` com seu repositório
   - Ex.: `repoURL: 'https://github.com/seu-usuario/seu-repo.git'`
 
 ## MinIO (S3 local)
