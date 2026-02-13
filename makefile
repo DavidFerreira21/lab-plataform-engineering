@@ -177,6 +177,9 @@ install-argo: ## Instalação do ArgoCD
 
 bootstrap-argo: ## Conecta o Argo ao Monorepo
 	@echo "🏗️ Aplicando configurações de GitOps..."
+	@kubectl -n $(NAMESPACE_ARGO) patch configmap argocd-cm --type merge --patch-file plataforma/argo/argocd-cm-crossplane-health-patch.yaml
+	@kubectl -n $(NAMESPACE_ARGO) rollout restart statefulset argocd-application-controller || true
+	@kubectl -n $(NAMESPACE_ARGO) rollout status statefulset argocd-application-controller --timeout=300s || true
 	@if [ "$(PLATFORM)" = "eks" ]; then \
 		kubectl apply -f plataforma/argo/application-eks.yaml; \
 		kubectl apply -f plataforma/argo/ingress-eks.yaml; \

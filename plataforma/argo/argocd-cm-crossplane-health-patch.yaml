@@ -1,0 +1,43 @@
+data:
+  resource.customizations.health.pkg.crossplane.io_Provider: |
+    hs = {}
+
+    if obj.status == nil or obj.status.conditions == nil then
+      hs.status = "Progressing"
+      hs.message = "Waiting for Provider status"
+      return hs
+    end
+
+    local installed = nil
+    local healthy = nil
+
+    for _, condition in ipairs(obj.status.conditions) do
+      if condition.type == "Installed" then
+        installed = condition
+      end
+      if condition.type == "Healthy" then
+        healthy = condition
+      end
+    end
+
+    if healthy ~= nil and healthy.status == "True" then
+      hs.status = "Healthy"
+      hs.message = healthy.message or "Provider is healthy"
+      return hs
+    end
+
+    if installed ~= nil and installed.status == "False" then
+      hs.status = "Degraded"
+      hs.message = installed.message or "Provider installation failed"
+      return hs
+    end
+
+    if healthy ~= nil and healthy.status == "False" then
+      hs.status = "Degraded"
+      hs.message = healthy.message or "Provider is unhealthy"
+      return hs
+    end
+
+    hs.status = "Progressing"
+    hs.message = (healthy and healthy.message) or (installed and installed.message) or "Installing provider"
+    return hs
