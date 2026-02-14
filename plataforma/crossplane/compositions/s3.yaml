@@ -16,7 +16,7 @@ spec:
   resources:
     - name: bucket
       base:
-        apiVersion: s3.aws.upbound.io/v1beta1
+        apiVersion: s3.aws.upbound.io/v1beta2
         kind: Bucket
         metadata:
           annotations:
@@ -98,7 +98,7 @@ spec:
 
     - name: bucket-encryption
       base:
-        apiVersion: s3.aws.upbound.io/v1beta1
+        apiVersion: s3.aws.upbound.io/v1beta2
         kind: BucketServerSideEncryptionConfiguration
         spec:
           forProvider:
@@ -130,7 +130,7 @@ spec:
 
     - name: bucket-versioning
       base:
-        apiVersion: s3.aws.upbound.io/v1beta1
+        apiVersion: s3.aws.upbound.io/v1beta2
         kind: BucketVersioning
         spec:
           forProvider:
