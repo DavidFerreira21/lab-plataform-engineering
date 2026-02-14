@@ -10,6 +10,9 @@ spec:
   compositeTypeRef:
     apiVersion: platform.lab/v1alpha1
     kind: XS3
+  mode: Resources
+  publishConnectionDetailsWithStoreConfigRef:
+    name: default
   resources:
     - name: bucket
       base:
@@ -36,13 +39,6 @@ spec:
               - fromFieldPath: spec.parameters.name
               - fromFieldPath: spec.parameters.region
               - fromFieldPath: metadata.uid
-                transforms:
-                  - type: string
-                    string:
-                      type: Regexp
-                      regexp:
-                        match: '^([a-f0-9]{8}).*'
-                        group: 1
         - type: FromCompositeFieldPath
           fromFieldPath: spec.parameters.region
           toFieldPath: spec.forProvider.region
@@ -61,6 +57,11 @@ spec:
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.arn
           toFieldPath: status.bucketArn
+      readinessChecks:
+        - type: MatchCondition
+          matchCondition:
+            type: Ready
+            status: "True"
 
     - name: bucket-public-access-block
       base:
@@ -86,16 +87,14 @@ spec:
               - fromFieldPath: spec.parameters.name
               - fromFieldPath: spec.parameters.region
               - fromFieldPath: metadata.uid
-                transforms:
-                  - type: string
-                    string:
-                      type: Regexp
-                      regexp:
-                        match: '^([a-f0-9]{8}).*'
-                        group: 1
         - type: FromCompositeFieldPath
           fromFieldPath: spec.parameters.providerConfigRefName
           toFieldPath: spec.providerConfigRef.name
+      readinessChecks:
+        - type: MatchCondition
+          matchCondition:
+            type: Ready
+            status: "True"
 
     - name: bucket-encryption
       base:
@@ -120,16 +119,14 @@ spec:
               - fromFieldPath: spec.parameters.name
               - fromFieldPath: spec.parameters.region
               - fromFieldPath: metadata.uid
-                transforms:
-                  - type: string
-                    string:
-                      type: Regexp
-                      regexp:
-                        match: '^([a-f0-9]{8}).*'
-                        group: 1
         - type: FromCompositeFieldPath
           fromFieldPath: spec.parameters.providerConfigRefName
           toFieldPath: spec.providerConfigRef.name
+      readinessChecks:
+        - type: MatchCondition
+          matchCondition:
+            type: Ready
+            status: "True"
 
     - name: bucket-versioning
       base:
@@ -153,13 +150,11 @@ spec:
               - fromFieldPath: spec.parameters.name
               - fromFieldPath: spec.parameters.region
               - fromFieldPath: metadata.uid
-                transforms:
-                  - type: string
-                    string:
-                      type: Regexp
-                      regexp:
-                        match: '^([a-f0-9]{8}).*'
-                        group: 1
         - type: FromCompositeFieldPath
           fromFieldPath: spec.parameters.providerConfigRefName
           toFieldPath: spec.providerConfigRef.name
+      readinessChecks:
+        - type: MatchCondition
+          matchCondition:
+            type: Ready
+            status: "True"
