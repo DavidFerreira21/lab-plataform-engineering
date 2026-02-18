@@ -1,6 +1,0 @@
-dependencies:
-- name: crossplane-iam-policy-claim
-  repository: file://../../plataforma/helm-charts/crossplane-iam-policy-claim
-  version: 0.1.0
-digest: sha256:6ff22a93ce923488ac35b7980a9a888d7b632d1e9794d6dddf52d592d4f30e06
-generated: "2026-02-13T20:18:29.320435111-03:00"

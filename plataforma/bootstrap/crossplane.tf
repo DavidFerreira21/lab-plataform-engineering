@@ -46,6 +46,33 @@ resource "kubernetes_manifest" "crossplane_irsa_serviceaccount" {
   ]
 }
 
+##############################################
+# EnvironmentConfig do Crossplane (OIDC do cluster)
+# Consumido pelas Compositions em mode: Pipeline.
+##############################################
+
+resource "kubernetes_manifest" "crossplane_environment_config" {
+  count = var.enable_crossplane && var.enable_eks_oidc_provider ? 1 : 0
+
+  manifest = {
+    apiVersion = "apiextensions.crossplane.io/v1beta1"
+    kind       = "EnvironmentConfig"
+    metadata = {
+      name = "cluster-aws-metadata"
+    }
+    data = {
+      oidcProviderArn    = module.eks.oidc_provider_arn
+      oidcIssuerHostpath = local.oidc_issuer_hostpath
+    }
+  }
+
+  depends_on = [
+    helm_release.crossplane,
+    module.eks,
+    kubernetes_manifest.crossplane_irsa_serviceaccount
+  ]
+}
+
 
 ##############################################
 # IRSA do Crossplane

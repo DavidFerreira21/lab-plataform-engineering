@@ -1,0 +1,33 @@
+crossplane-s3-claim:
+  claim:
+    name: api-storage
+    namespace: app
+    region: us-east-1
+    deletionPolicy: Orphan
+    providerConfigRefName: default
+    tags:
+      owner: api
+      environment: eks
+
+crossplane-irsa-claim:
+  claim:
+    name: api-storage-irsa
+    namespace: app
+    serviceAccountNamespace: app
+    serviceAccountName: api-carro
+    policyName: "api-storage-irsa-policy"
+    policyDocument: ""
+    policyDescription: "S3 access policy for api workload"
+    policyPath: "/"
+    bucketName: "api-storage"
+    bucketActions:
+      - s3:ListBucket
+    objectActions:
+      - s3:GetObject
+      - s3:PutObject
+      - s3:DeleteObject
+    deletionPolicy: Orphan
+    providerConfigRefName: default
+    tags:
+      owner: api
+      environment: eks

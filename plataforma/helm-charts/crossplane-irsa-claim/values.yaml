@@ -3,10 +3,17 @@ claim:
   namespace: app
   serviceAccountNamespace: app
   serviceAccountName: api-carro
-  # Populate from bootstrap outputs / SSM parameters
-  oidcProviderArn: "REPLACE_WITH_OIDC_PROVIDER_ARN"
-  oidcIssuerHostpath: "REPLACE_WITH_OIDC_ISSUER_HOSTPATH"
-  policyArn: "REPLACE_WITH_POLICY_ARN"
+  policyName: "app-s3-irsa-policy"
+  policyDocument: ""
+  policyDescription: "Managed policy for IRSA workload"
+  policyPath: "/"
+  bucketName: ""
+  bucketActions:
+    - s3:ListBucket
+  objectActions:
+    - s3:GetObject
+    - s3:PutObject
+    - s3:DeleteObject
   deletionPolicy: Orphan
   providerConfigRefName: default
   tags: {}

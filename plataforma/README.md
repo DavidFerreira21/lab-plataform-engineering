@@ -12,12 +12,13 @@ plataforma/
 │   ├── ingress-kind.yaml     # Ingress do ArgoCD (Kind)
 │   └── ingress-eks.yaml      # Ingress do ArgoCD (EKS)
 ├── bootstrap/                # Terraform bootstrap (raiz + módulos)
+├── cluster-metadata/         # Chart app de metadados do cluster (External Secrets)
+├── crossplane/               # Base + XRD + Compositions do Crossplane
 ├── minio/
 │   └── minio.yaml             # MinIO local (S3 compatível)
 └── helm-charts/
     ├── app-template/         # Chart base compartilhado pelas apps
     ├── crossplane-s3-claim/  # Chart base do claim S3 (Crossplane)
-    ├── crossplane-iam-policy-claim/ # Chart base do claim IAM Policy
     ├── crossplane-irsa-claim/ # Chart base do claim IRSA
     └── external-secrets-ssm-metadata/ # SSM -> Secret (metadados do cluster)
 ```
@@ -27,14 +28,12 @@ plataforma/
 ### Application
 Arquivos:
 - `plataforma/argo/application-kind.yaml` (API + Web + MinIO)
-- `plataforma/argo/application-eks.yaml` (API + Web + Crossplane/S3 + IAM + IRSA)
+- `plataforma/argo/application-eks.yaml` (API + Web + Crossplane/S3 + IRSA)
 - Cada source possui `helm.releaseName` para evitar conflito de recursos
   - `platform-api` → recursos da API
   - `platform-web` → recursos da Web
-  - `platform-storage` → claim S3
-  - `platform-iam-policy` → claim IAM Policy
+  - `platform-storage-s3` → claims S3 + IRSA (instância unificada)
   - `platform-cluster-metadata` → External Secrets (SSM -> Secret)
-  - `platform-irsa` → claim IRSA
 
 ### Ingress do ArgoCD
 Arquivo: `plataforma/argo/ingress-kind.yaml`
@@ -79,40 +78,33 @@ Depois commite:
 Para os charts Crossplane de instância (GitOps), rode também:
 
 ```bash
-helm dependency build gitops/storage-bucket
-helm dependency build gitops/cluster-metadata
-helm dependency build gitops/iam-policy-app
-helm dependency build gitops/irsa-app
+helm dependency build gitops/storage-s3
+helm dependency build plataforma/cluster-metadata
 ```
 
 Depois commite:
-- `gitops/storage-bucket/Chart.lock`
-- `gitops/storage-bucket/charts/*.tgz`
-- `gitops/cluster-metadata/Chart.lock`
-- `gitops/cluster-metadata/charts/*.tgz`
-- `gitops/iam-policy-app/Chart.lock`
-- `gitops/iam-policy-app/charts/*.tgz`
-- `gitops/irsa-app/Chart.lock`
-- `gitops/irsa-app/charts/*.tgz`
+- `gitops/storage-s3/Chart.lock`
+- `gitops/storage-s3/charts/*.tgz`
+- `plataforma/cluster-metadata/Chart.lock`
+- `plataforma/cluster-metadata/charts/*.tgz`
 
-## Crossplane IAM/IRSA (automação)
+## Crossplane S3/IRSA (automação)
+
+Guia detalhado:
+- `plataforma/crossplane/README.md`
 
 Recursos de plataforma criados no GitOps:
-- `plataforma/crossplane/xrd/iam-policy-xrd.yaml`
 - `plataforma/crossplane/xrd/irsa-xrd.yaml`
-- `plataforma/crossplane/compositions/iam-policy.yaml`
 - `plataforma/crossplane/compositions/irsa.yaml`
 
 Instâncias (claims) via Helm:
-- `gitops/storage-bucket` cria bucket S3.
-- `gitops/iam-policy-app` cria `IAMPolicy` para o bucket.
-- `gitops/cluster-metadata` sincroniza do SSM para Secret (`cluster-aws-metadata`) via External Secrets.
-- `gitops/irsa-app` cria `IRSA` e attach da policy na role.
+- `gitops/storage-s3` cria bucket S3 + IRSA no mesmo app.
+- `plataforma/cluster-metadata` sincroniza do SSM para Secret (`cluster-aws-metadata`) via External Secrets.
 
 Importante:
 - O bucket é determinístico (nome definido no claim S3), então a policy já usa o nome esperado.
-- Não é mais necessário editar OIDC/account manualmente: use `make irsa-values-auto` para gerar `gitops/irsa-app/values.auto.yaml` com valores vindos do SSM.
-- O `make all-eks` já executa essa etapa automaticamente antes do bootstrap do Argo.
+- Não é necessário informar OIDC no claim IRSA: a Composition lê os dados do `EnvironmentConfig` `cluster-aws-metadata`.
+- O `EnvironmentConfig` é mantido no bootstrap Terraform com os valores reais do cluster EKS.
 
 ## Ambiente local (Kind + Nginx + ArgoCD)
 O `makefile` na raiz automatiza o setup. A lista de comandos principais fica no `README.md` da raiz: [README.md](../README.md).

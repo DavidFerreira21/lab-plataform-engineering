@@ -1,3 +1,5 @@
+# Namespace base do Crossplane e dos providers.
+# Wave -2 garante que existe antes dos demais recursos.
 apiVersion: v1
 kind: Namespace
 metadata:

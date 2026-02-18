@@ -4,8 +4,9 @@
 CLUSTER_NAME=dev
 NAMESPACE_ARGO=argocd
 BIN_DIR=/usr/local/bin
-AWS_REGION?=us-east-1
-TF_STATE_BUCKET?=tfstate-terraform-lab-plataform-engineering
+# Regiao fixa do lab
+AWS_REGION:=us-east-1
+TF_STATE_BUCKET?=tfstate-terraform-lab-plataform-engineering-1
 TF_BOOTSTRAP_DIR?=plataforma/bootstrap
 KARPENTER_NAMESPACE?=karpenter
 KARPENTER_VERSION?=1.8.6
@@ -15,7 +16,7 @@ PLATFORM?=kind
 EKS_CLUSTER_NAME?=eks-dev
 EKS_NODEGROUP_NAME?=tools
 	
-.PHONY: all-kind all-eks setup cluster-kind cluster-eks install-nginx-kind install-nginx-eks install-argo bootstrap-argo down down-eks help aws-configure tf-backend-bootstrap tf-eks-init tf-eks-apply eks-configure-context show-hosts helm-build irsa-values-auto
+.PHONY: all-kind all-eks setup cluster-kind cluster-eks install-nginx-kind install-nginx-eks install-argo bootstrap-argo down down-eks help aws-configure tf-backend-bootstrap tf-eks-init tf-eks-apply eks-configure-context show-hosts helm-build
 
 # ==========================================
 # COMANDO PRINCIPAL
@@ -36,7 +37,6 @@ all-eks:
 	@$(MAKE) setup
 	@$(MAKE) tf-backend-bootstrap
 	@$(MAKE) cluster-eks
-	@$(MAKE) irsa-values-auto
 	@$(MAKE) helm-build
 	@$(MAKE) install-nginx-eks
 	@$(MAKE) install-argo PLATFORM=eks
@@ -245,19 +245,6 @@ helm-build: ## Atualiza dependências Helm (apps + claims Crossplane)
 	@echo "⛵ Atualizando dependências Helm..."
 	@helm dependency build gitops/app
 	@helm dependency build gitops/web
-	@helm dependency build gitops/storage-bucket
-	@helm dependency build gitops/cluster-metadata
-	@helm dependency build gitops/iam-policy-app
-	@helm dependency build gitops/irsa-app
+	@helm dependency build gitops/storage-s3
+	@helm dependency build plataforma/cluster-metadata
 	@echo "✅ Dependências atualizadas."
-
-irsa-values-auto: ## Gera gitops/irsa-app/values.auto.yaml usando SSM/outputs do bootstrap
-	@if ! command -v terraform >/dev/null 2>&1; then echo "❌ Terraform não encontrado"; exit 1; fi
-	@if ! command -v aws >/dev/null 2>&1; then echo "❌ AWS CLI não encontrado"; exit 1; fi
-	@BASE_PATH=$$(cd $(TF_BOOTSTRAP_DIR) && terraform output -raw cluster_metadata_ssm_base_path 2>/dev/null); \
-	if [ -z "$$BASE_PATH" ]; then echo "❌ cluster_metadata_ssm_base_path vazio. Verifique enable_cluster_metadata_ssm=true."; exit 1; fi; \
-	OIDC_PROVIDER_ARN=$$(aws ssm get-parameter --region $(AWS_REGION) --name "$$BASE_PATH/oidc/provider_arn" --query 'Parameter.Value' --output text); \
-	OIDC_ISSUER_HOSTPATH=$$(aws ssm get-parameter --region $(AWS_REGION) --name "$$BASE_PATH/oidc/issuer_hostpath" --query 'Parameter.Value' --output text); \
-	ACCOUNT_ID=$$(aws ssm get-parameter --region $(AWS_REGION) --name "$$BASE_PATH/account/id" --query 'Parameter.Value' --output text 2>/dev/null || aws sts get-caller-identity --query Account --output text); \
-	printf 'crossplane-irsa-claim:\n  claim:\n    oidcProviderArn: "%s"\n    oidcIssuerHostpath: "%s"\n    policyArn: "arn:aws:iam::%s:policy/api-storage-policy"\n' "$$OIDC_PROVIDER_ARN" "$$OIDC_ISSUER_HOSTPATH" "$$ACCOUNT_ID" > gitops/irsa-app/values.auto.yaml
-	@echo "✅ Arquivo gerado: gitops/irsa-app/values.auto.yaml"

@@ -1,3 +1,6 @@
+# XRD do produto de plataforma "IRSA".
+# Modelo atual: o claim informa ServiceAccount + política (nome/documento).
+# OIDC vem de EnvironmentConfig mantido pela plataforma.
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
@@ -5,10 +8,12 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
+  # Grupo e tipos publicados pela API customizada.
   group: platform.lab
   names:
     kind: XIRSA
     plural: xirsas
+  # Claim names: o que os times de app usam.
   claimNames:
     kind: IRSA
     plural: irsas
@@ -20,6 +25,7 @@ spec:
         openAPIV3Schema:
           type: object
           properties:
+            # Entradas aceitas no spec do claim/composite.
             spec:
               type: object
               properties:
@@ -32,12 +38,16 @@ spec:
                       type: string
                     serviceAccountName:
                       type: string
-                    oidcProviderArn:
+                    policyName:
                       type: string
-                    oidcIssuerHostpath:
+                    policyDocument:
                       type: string
-                    policyArn:
+                    policyDescription:
                       type: string
+                      default: "Managed policy for IRSA workload"
+                    policyPath:
+                      type: string
+                      default: "/"
                     deletionPolicy:
                       type: string
                       default: Orphan
@@ -55,15 +65,19 @@ spec:
                     - name
                     - serviceAccountNamespace
                     - serviceAccountName
-                    - oidcProviderArn
-                    - oidcIssuerHostpath
-                    - policyArn
+                    - policyName
+                    - policyDocument
               required:
                 - parameters
+            # Campos publicados de volta pelo Composition.
             status:
               type: object
               properties:
                 roleArn:
                   type: string
                 roleName:
+                  type: string
+                policyArn:
+                  type: string
+                policyName:
                   type: string

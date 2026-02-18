@@ -1,3 +1,5 @@
+# Instala o provider AWS específico de IAM.
+# RuntimeConfig aponta para o padrão de execução com IRSA.
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:

@@ -1,3 +1,6 @@
+# Composition do XIRSA.
+# Fluxo: cria Policy -> cria Role IRSA -> faz RolePolicyAttachment.
+# OIDC e injetado via EnvironmentConfig (cluster-aws-metadata).
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
@@ -8,77 +11,153 @@ metadata:
     platform.lab/provider: aws
     platform.lab/type: irsa
 spec:
+  # Tipo composto que esta Composition atende.
   compositeTypeRef:
     apiVersion: platform.lab/v1alpha1
     kind: XIRSA
-  resources:
-    - name: role
-      base:
-        apiVersion: iam.aws.upbound.io/v1beta1
-        kind: Role
-        metadata:
-          annotations:
-            crossplane.io/external-name: ""
-        spec:
-          deletionPolicy: Orphan
-          forProvider:
-            assumeRolePolicyDocument: "{}"
-            tags: {}
-          providerConfigRef:
-            name: default
-      patches:
-        - type: FromCompositeFieldPath
-          fromFieldPath: spec.parameters.name
-          toFieldPath: metadata.annotations[crossplane.io/external-name]
-        - type: FromCompositeFieldPath
-          fromFieldPath: spec.parameters.tags
-          toFieldPath: spec.forProvider.tags
-        - type: FromCompositeFieldPath
-          fromFieldPath: spec.parameters.deletionPolicy
-          toFieldPath: spec.deletionPolicy
-        - type: FromCompositeFieldPath
-          fromFieldPath: spec.parameters.providerConfigRefName
-          toFieldPath: spec.providerConfigRef.name
-        - type: CombineFromComposite
-          toFieldPath: spec.forProvider.assumeRolePolicyDocument
-          combine:
-            strategy: string
-            string:
-              fmt: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Federated":"%s"},"Action":"sts:AssumeRoleWithWebIdentity","Condition":{"StringEquals":{"%s:aud":"sts.amazonaws.com","%s:sub":"system:serviceaccount:%s:%s"}}}]}'
-            variables:
-              - fromFieldPath: spec.parameters.oidcProviderArn
-              - fromFieldPath: spec.parameters.oidcIssuerHostpath
-              - fromFieldPath: spec.parameters.oidcIssuerHostpath
-              - fromFieldPath: spec.parameters.serviceAccountNamespace
-              - fromFieldPath: spec.parameters.serviceAccountName
-        - type: ToCompositeFieldPath
-          fromFieldPath: status.atProvider.arn
-          toFieldPath: status.roleArn
-        - type: ToCompositeFieldPath
-          fromFieldPath: metadata.annotations[crossplane.io/external-name]
-          toFieldPath: status.roleName
 
-    - name: role-policy-attachment
-      base:
-        apiVersion: iam.aws.upbound.io/v1beta1
-        kind: RolePolicyAttachment
-        spec:
-          deletionPolicy: Orphan
-          forProvider:
-            role: ""
-            policyArn: ""
-          providerConfigRef:
-            name: default
-      patches:
-        - type: FromCompositeFieldPath
-          fromFieldPath: spec.parameters.name
-          toFieldPath: spec.forProvider.role
-        - type: FromCompositeFieldPath
-          fromFieldPath: spec.parameters.policyArn
-          toFieldPath: spec.forProvider.policyArn
-        - type: FromCompositeFieldPath
-          fromFieldPath: spec.parameters.deletionPolicy
-          toFieldPath: spec.deletionPolicy
-        - type: FromCompositeFieldPath
-          fromFieldPath: spec.parameters.providerConfigRefName
-          toFieldPath: spec.providerConfigRef.name
+  # Modo pipeline para permitir uso de EnvironmentConfig + function.
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        environment:
+          environmentConfigs:
+            - type: Reference
+              ref:
+                name: cluster-aws-metadata
+        resources:
+          # 1) Managed policy dedicada ao workload.
+          - name: policy
+            base:
+              apiVersion: iam.aws.upbound.io/v1beta1
+              kind: Policy
+              metadata:
+                annotations:
+                  crossplane.io/external-name: ""
+              spec:
+                deletionPolicy: Orphan
+                forProvider:
+                  description: "Managed policy for IRSA workload"
+                  path: "/"
+                  policy: "{}"
+                  tags: {}
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.policyName
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.policyDocument
+                toFieldPath: spec.forProvider.policy
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.policyDescription
+                toFieldPath: spec.forProvider.description
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.policyPath
+                toFieldPath: spec.forProvider.path
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.tags
+                toFieldPath: spec.forProvider.tags
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.deletionPolicy
+                toFieldPath: spec.deletionPolicy
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.providerConfigRefName
+                toFieldPath: spec.providerConfigRef.name
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.arn
+                toFieldPath: status.policyArn
+              - type: ToCompositeFieldPath
+                fromFieldPath: metadata.annotations[crossplane.io/external-name]
+                toFieldPath: status.policyName
+
+          # 2) Role IRSA com trust policy baseada no OIDC do ambiente.
+          - name: role
+            base:
+              apiVersion: iam.aws.upbound.io/v1beta1
+              kind: Role
+              metadata:
+                annotations:
+                  crossplane.io/external-name: ""
+              spec:
+                deletionPolicy: Orphan
+                forProvider:
+                  assumeRolePolicyDocument: "{}"
+                  tags: {}
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.name
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.serviceAccountNamespace
+                toFieldPath: metadata.annotations[platform.lab/service-account-namespace]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.serviceAccountName
+                toFieldPath: metadata.annotations[platform.lab/service-account-name]
+              - type: ToEnvironmentFieldPath
+                fromFieldPath: metadata.annotations[platform.lab/service-account-namespace]
+                toFieldPath: serviceAccountNamespace
+              - type: ToEnvironmentFieldPath
+                fromFieldPath: metadata.annotations[platform.lab/service-account-name]
+                toFieldPath: serviceAccountName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.tags
+                toFieldPath: spec.forProvider.tags
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.deletionPolicy
+                toFieldPath: spec.deletionPolicy
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.providerConfigRefName
+                toFieldPath: spec.providerConfigRef.name
+              - type: CombineFromEnvironment
+                toFieldPath: spec.forProvider.assumeRolePolicyDocument
+                combine:
+                  strategy: string
+                  string:
+                    fmt: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Federated":"%s"},"Action":"sts:AssumeRoleWithWebIdentity","Condition":{"StringEquals":{"%s:aud":"sts.amazonaws.com","%s:sub":"system:serviceaccount:%s:%s"}}}]}'
+                  variables:
+                    - fromFieldPath: oidcProviderArn
+                    - fromFieldPath: oidcIssuerHostpath
+                    - fromFieldPath: oidcIssuerHostpath
+                    - fromFieldPath: serviceAccountNamespace
+                    - fromFieldPath: serviceAccountName
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.arn
+                toFieldPath: status.roleArn
+              - type: ToCompositeFieldPath
+                fromFieldPath: metadata.annotations[crossplane.io/external-name]
+                toFieldPath: status.roleName
+
+          # 3) Anexa a policy criada acima a role.
+          - name: role-policy-attachment
+            base:
+              apiVersion: iam.aws.upbound.io/v1beta1
+              kind: RolePolicyAttachment
+              spec:
+                deletionPolicy: Orphan
+                forProvider:
+                  role: ""
+                  policyArn: ""
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.name
+                toFieldPath: spec.forProvider.role
+              - type: FromCompositeFieldPath
+                fromFieldPath: status.policyArn
+                toFieldPath: spec.forProvider.policyArn
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.deletionPolicy
+                toFieldPath: spec.deletionPolicy
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.providerConfigRefName
+                toFieldPath: spec.providerConfigRef.name

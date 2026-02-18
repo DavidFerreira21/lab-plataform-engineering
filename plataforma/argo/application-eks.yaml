@@ -17,31 +17,16 @@ spec:
       path: plataforma/crossplane/compositions
     - repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
       targetRevision: HEAD
-      path: gitops/iam-policy-app
-      helm:
-        releaseName: platform-iam-policy
-        valueFiles:
-          - values.yaml
-    - repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
-      targetRevision: HEAD
-      path: gitops/cluster-metadata
+      path: plataforma/cluster-metadata
       helm:
         releaseName: platform-cluster-metadata
         valueFiles:
           - values.yaml
     - repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
       targetRevision: HEAD
-      path: gitops/irsa-app
+      path: gitops/storage-s3
       helm:
-        releaseName: platform-irsa
-        valueFiles:
-          - values.yaml
-          - values.auto.yaml
-    - repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'
-      targetRevision: HEAD
-      path: gitops/storage-bucket
-      helm:
-        releaseName: platform-storage
+        releaseName: platform-storage-s3
         valueFiles:
           - values.yaml
     - repoURL: 'https://github.com/DavidFerreira21/lab-plataform-engineering.git'

@@ -1,5 +1,0 @@
-crossplane-irsa-claim:
-  claim:
-    oidcProviderArn: "arn:aws:iam::917246193838:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/43CF56ABDA22C64AB7F371C8BA2B8CFF"
-    oidcIssuerHostpath: "oidc.eks.us-east-1.amazonaws.com/id/43CF56ABDA22C64AB7F371C8BA2B8CFF"
-    policyArn: "arn:aws:iam::917246193838:policy/api-storage-policy"

@@ -1,3 +1,5 @@
+# XRD do produto de plataforma "S3".
+# Define o contrato do Claim (S3) e do Composite (XS3).
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
@@ -5,10 +7,12 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
+  # Grupo e tipos publicados pela API customizada.
   group: platform.lab
   names:
     kind: XS3
     plural: xs3s
+  # Claim names: o que os times de app usam.
   claimNames:
     kind: S3
     plural: s3s
@@ -20,6 +24,7 @@ spec:
         openAPIV3Schema:
           type: object
           properties:
+            # Entradas aceitas no spec do claim/composite.
             spec:
               type: object
               properties:
@@ -28,6 +33,9 @@ spec:
                   properties:
                     name:
                       type: string
+                      minLength: 3
+                      maxLength: 11
+                      pattern: '^[a-z0-9][a-z0-9-]*[a-z0-9]$'
                     region:
                       type: string
                       default: us-east-1
@@ -48,6 +56,7 @@ spec:
                     - name
               required:
                 - parameters
+            # Campos publicados de volta pelo Composition.
             status:
               type: object
               properties:

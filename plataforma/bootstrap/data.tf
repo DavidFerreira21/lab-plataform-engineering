@@ -38,12 +38,8 @@ data "aws_eks_cluster_auth" "this" {
 ##############################################
 
 locals {
-  oidc_issuer_hostpath = replace(module.eks.cluster_oidc_issuer, "https://", "")
-  crossplane_irsa_subject = format(
-    "system:serviceaccount:%s:%s",
-    var.crossplane_irsa_namespace,
-    var.crossplane_irsa_service_account
-  )
+  oidc_issuer_hostpath    = replace(module.eks.cluster_oidc_issuer, "https://", "")
+  crossplane_irsa_subject = format("system:serviceaccount:%s:%s", var.crossplane_irsa_namespace, var.crossplane_irsa_service_account)
 }
 
 data "aws_partition" "current" {}
@@ -68,9 +64,13 @@ data "aws_iam_policy_document" "crossplane_irsa_trust" {
     }
 
     condition {
-      test     = "StringEquals"
+      test     = "StringLike"
       variable = "${local.oidc_issuer_hostpath}:sub"
-      values   = [local.crossplane_irsa_subject]
+      values = [
+        local.crossplane_irsa_subject,
+        "system:serviceaccount:${var.crossplane_irsa_namespace}:provider-aws*",
+        "system:serviceaccount:${var.crossplane_irsa_namespace}:upbound-provider-family-aws*"
+      ]
     }
   }
 }

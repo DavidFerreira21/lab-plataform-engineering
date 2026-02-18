@@ -1,3 +1,7 @@
+{{- $bucketName := .Values.claim.bucketName | default "" -}}
+{{- $bucketArn := printf "arn:aws:s3:::%s" $bucketName -}}
+{{- $objectArn := printf "arn:aws:s3:::%s/*" $bucketName -}}
+{{- $generatedPolicy := dict "Version" "2012-10-17" "Statement" (list (dict "Effect" "Allow" "Action" .Values.claim.bucketActions "Resource" (list $bucketArn)) (dict "Effect" "Allow" "Action" .Values.claim.objectActions "Resource" (list $objectArn))) -}}
 apiVersion: platform.lab/v1alpha1
 kind: IRSA
 metadata:
@@ -11,9 +15,18 @@ spec:
     name: {{ .Values.claim.name | quote }}
     serviceAccountNamespace: {{ .Values.claim.serviceAccountNamespace | quote }}
     serviceAccountName: {{ .Values.claim.serviceAccountName | quote }}
-    oidcProviderArn: {{ .Values.claim.oidcProviderArn | quote }}
-    oidcIssuerHostpath: {{ .Values.claim.oidcIssuerHostpath | quote }}
-    policyArn: {{ .Values.claim.policyArn | quote }}
+    policyName: {{ .Values.claim.policyName | quote }}
+    policyDocument: |
+{{- if .Values.claim.policyDocument }}
+{{- .Values.claim.policyDocument | nindent 6 }}
+{{- else }}
+{{- if eq $bucketName "" }}
+{{- fail "claim.bucketName is required when claim.policyDocument is empty" }}
+{{- end }}
+{{- $generatedPolicy | toJson | nindent 6 }}
+{{- end }}
+    policyDescription: {{ .Values.claim.policyDescription | quote }}
+    policyPath: {{ .Values.claim.policyPath | quote }}
     deletionPolicy: {{ .Values.claim.deletionPolicy | quote }}
     providerConfigRefName: {{ .Values.claim.providerConfigRefName | quote }}
     tags:

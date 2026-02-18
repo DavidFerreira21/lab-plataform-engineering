@@ -1,3 +1,5 @@
+# Composition do XS3.
+# Traduz o claim S3 em múltiplos recursos AWS (bucket + segurança).
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
@@ -7,6 +9,7 @@ metadata:
   labels:
     platform.lab/provider: aws
 spec:
+  # Tipo composto que esta Composition atende.
   compositeTypeRef:
     apiVersion: platform.lab/v1alpha1
     kind: XS3
@@ -14,6 +17,7 @@ spec:
   publishConnectionDetailsWithStoreConfigRef:
     name: default
   resources:
+    # Recurso principal: bucket.
     - name: bucket
       base:
         apiVersion: s3.aws.upbound.io/v1beta2
@@ -29,6 +33,7 @@ spec:
           providerConfigRef:
             name: default
       patches:
+        # Nome externo único para evitar colisão global de bucket.
         - type: CombineFromComposite
           toFieldPath: metadata.annotations[crossplane.io/external-name]
           combine:
@@ -63,6 +68,7 @@ spec:
             type: Ready
             status: "True"
 
+    # Hardenização: bloqueio de acesso público no bucket.
     - name: bucket-public-access-block
       base:
         apiVersion: s3.aws.upbound.io/v1beta1
@@ -96,6 +102,7 @@ spec:
             type: Ready
             status: "True"
 
+    # Hardenização: criptografia server-side padrão.
     - name: bucket-encryption
       base:
         apiVersion: s3.aws.upbound.io/v1beta2
@@ -128,6 +135,7 @@ spec:
             type: Ready
             status: "True"
 
+    # Governança: versionamento habilitado.
     - name: bucket-versioning
       base:
         apiVersion: s3.aws.upbound.io/v1beta2

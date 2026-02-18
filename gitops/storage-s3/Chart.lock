@@ -1,0 +1,9 @@
+dependencies:
+- name: crossplane-s3-claim
+  repository: file://../../plataforma/helm-charts/crossplane-s3-claim
+  version: 0.1.0
+- name: crossplane-irsa-claim
+  repository: file://../../plataforma/helm-charts/crossplane-irsa-claim
+  version: 0.1.0
+digest: sha256:e21d164f87a67711f6e0e07540d75a11d79620cb9efbab430dcfed177a69d99f
+generated: "2026-02-17T21:38:11.285480166-03:00"

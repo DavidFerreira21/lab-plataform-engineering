@@ -37,11 +37,15 @@ Este repositório é um laboratório prático de **Platform Engineering** e **De
 │   └── web/                   # Web Flask
 ├── gitops/
 │   ├── app/                   # Helm chart da API
-│   └── web/                   # Helm chart da Web
+│   ├── web/                   # Helm chart da Web
+│   └── storage-s3/            # Instância unificada S3 + IRSA (claims)
 ├── plataforma/
 │   ├── argo/                  # Application + Ingress do ArgoCD
+│   ├── cluster-metadata/      # External Secrets de metadados do cluster
+│   ├── crossplane/            # Base + XRD + Compositions
+│   ├── helm-charts/           # Charts base reutilizáveis
 │   ├── minio/                 # MinIO local (S3 compatível)
-│   └── charts/                # Helm chart base (app-template)
+│   └── bootstrap/             # Terraform bootstrap EKS
 ├── kind-config.yaml           # Cluster Kind com portas 80/443
 ├── makefile                   # Setup local (Kind, Nginx, ArgoCD)
 └── README.md
@@ -144,7 +148,7 @@ O `makefile` padroniza o setup da plataforma local (Kind) e da plataforma AWS (E
 - `make cluster-kind` cria o cluster Kind (usa `kind-config.yaml`)
 - `make install-nginx-kind` instala o Nginx Ingress no Kind
 - `make all-eks` executa fluxo EKS completo (bucket state, Terraform, kubecontext, ingress e ArgoCD)
-- `make tf-backend-bootstrap` cria o bucket S3 do Terraform state (`tfstate-terraform-lab-plataform-engineering`)
+- `make tf-backend-bootstrap` cria o bucket S3 do Terraform state (`tfstate-terraform-lab-plataform-engineering-1`)
 - `make cluster-eks` roda `terraform init/apply` em `plataforma/bootstrap` e atualiza o `kubeconfig`
 - Backend do Terraform no bootstrap usa lock nativo em S3 (`use_lockfile = true`, sem DynamoDB)
 - `make install-argo` instala o ArgoCD
