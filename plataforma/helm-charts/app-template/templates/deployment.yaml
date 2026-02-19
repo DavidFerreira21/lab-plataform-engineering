@@ -12,7 +12,8 @@ spec:
       labels:
         app: {{ include "app-template.fullname" . | quote }}
     spec:
-{{- if or .Values.serviceAccount.create .Values.serviceAccount.name }}
+{{- $sa := .Values.serviceAccount | default dict }}
+{{- if or $sa.create $sa.name }}
       serviceAccountName: {{ include "app-template.serviceAccountName" . | quote }}
 {{- end }}
       containers:

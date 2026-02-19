@@ -15,8 +15,9 @@
 {{- end -}}
 
 {{- define "app-template.serviceAccountName" -}}
-{{- if .Values.serviceAccount.name -}}
-{{- .Values.serviceAccount.name | trunc 63 | trimSuffix "-" -}}
+{{- $sa := .Values.serviceAccount | default dict -}}
+{{- if $sa.name -}}
+{{- $sa.name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
 {{- include "app-template.fullname" . -}}
 {{- end -}}

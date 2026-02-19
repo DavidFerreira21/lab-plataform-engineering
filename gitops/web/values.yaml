@@ -1,4 +1,6 @@
 app-template:
+  serviceAccount:
+    create: false
   replicaCount: 1
   image:
     repository: david210/lab-web-carro # Imagem do Front-end
