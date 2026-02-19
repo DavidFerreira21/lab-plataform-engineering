@@ -12,6 +12,9 @@ spec:
       labels:
         app: {{ include "app-template.fullname" . | quote }}
     spec:
+{{- if or .Values.serviceAccount.create .Values.serviceAccount.name }}
+      serviceAccountName: {{ include "app-template.serviceAccountName" . | quote }}
+{{- end }}
       containers:
         - name: {{ .Chart.Name | quote }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"

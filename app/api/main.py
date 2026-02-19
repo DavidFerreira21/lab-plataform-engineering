@@ -181,6 +181,16 @@ async def upload_documento(carro_id: str, documento: UploadFile = File(...)):
     try:
         s3.upload_fileobj(documento.file, S3_BUCKET, key)
     except Exception as exc:
+        log_json(
+            logging.ERROR,
+            "s3_upload_failed",
+            error_type=type(exc).__name__,
+            error=str(exc),
+            bucket=S3_BUCKET,
+            key=key,
+            endpoint=S3_ENDPOINT,
+            region=S3_REGION,
+        )
         raise HTTPException(status_code=500, detail="upload_failed") from exc
 
     CarroRepo.atualizar_documento(carro_id, key)

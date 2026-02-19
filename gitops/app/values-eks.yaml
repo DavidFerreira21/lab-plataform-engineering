@@ -1,4 +1,9 @@
 app-template:
+  serviceAccount:
+    create: true
+    name: api-carro
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::767397771767:role/api-storage-irsa"
   replicaCount: 1
   image:
     repository: david210/lab-api-carro
@@ -11,11 +16,11 @@ app-template:
     - name: S3_ENDPOINT
       value: "https://s3.amazonaws.com"
     - name: S3_BUCKET
-      value: "carros"
+      value: "api-storage"
     - name: S3_ACCESS_KEY
-      value: "CHANGE_ME_AWS_ACCESS_KEY"
+      value: ""
     - name: S3_SECRET_KEY
-      value: "CHANGE_ME_AWS_SECRET_KEY"
+      value: ""
     - name: S3_REGION
       value: "us-east-1"
     - name: S3_USE_SSL

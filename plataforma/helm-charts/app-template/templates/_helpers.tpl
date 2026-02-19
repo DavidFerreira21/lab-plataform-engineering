@@ -13,3 +13,11 @@
 {{- printf "%s-svc" (include "app-template.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
+
+{{- define "app-template.serviceAccountName" -}}
+{{- if .Values.serviceAccount.name -}}
+{{- .Values.serviceAccount.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- include "app-template.fullname" . -}}
+{{- end -}}
+{{- end -}}
