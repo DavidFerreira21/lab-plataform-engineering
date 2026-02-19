@@ -54,7 +54,9 @@ tf-eks-apply: ## Executa terraform apply em plataforma/bootstrap
 	@if ! command -v terraform >/dev/null 2>&1; then echo "❌ Terraform não encontrado"; exit 1; fi
 	@echo "🚀 Terraform apply (fase 1: EKS) em $(TF_BOOTSTRAP_DIR)..."
 	@cd $(TF_BOOTSTRAP_DIR) && terraform apply -auto-approve -target=module.eks
-	@echo "🚀 Terraform apply (fase 2: recursos dependentes do cluster) em $(TF_BOOTSTRAP_DIR)..."
+	@echo "🚀 Terraform apply (fase 2: instalação do Crossplane/CRDs) em $(TF_BOOTSTRAP_DIR)..."
+	@cd $(TF_BOOTSTRAP_DIR) && terraform apply -auto-approve -target=helm_release.crossplane
+	@echo "🚀 Terraform apply (fase 3: recursos dependentes do cluster) em $(TF_BOOTSTRAP_DIR)..."
 	@cd $(TF_BOOTSTRAP_DIR) && terraform apply -auto-approve
 
 eks-configure-context: ## Atualiza kubeconfig para o cluster EKS criado pelo Terraform

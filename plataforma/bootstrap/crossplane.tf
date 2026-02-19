@@ -55,7 +55,7 @@ resource "kubernetes_manifest" "crossplane_environment_config" {
   count = var.enable_crossplane && var.enable_eks_oidc_provider ? 1 : 0
 
   manifest = {
-    apiVersion = "apiextensions.crossplane.io/v1beta1"
+    apiVersion = var.crossplane_environment_config_api_version
     kind       = "EnvironmentConfig"
     metadata = {
       name = "cluster-aws-metadata"
