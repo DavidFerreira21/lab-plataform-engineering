@@ -14,9 +14,9 @@ app-template:
     name: api-carro-svc
   env:
     - name: S3_ENDPOINT
-      value: "https://s3.amazonaws.com"
+      value: "https://s3.us-east-1.amazonaws.com"
     - name: S3_BUCKET
-      value: "api-storage"
+      value: "api-storage-us-east-1-96c2a592-879e-4ffd-9db1-78f049f00a88"
     - name: S3_ACCESS_KEY
       value: ""
     - name: S3_SECRET_KEY
