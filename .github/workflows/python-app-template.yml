@@ -141,11 +141,14 @@ jobs:
       - name: Run Trivy (SCA & Image Scan)
         # Escaneia dependências e imagem por CVEs críticos
         uses: aquasecurity/trivy-action@master
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: "true"
         with:
           image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image_name }}:v${{ github.run_number }}'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
+          trivyignores: '.trivyignore'
           vuln-type: 'os,library'
           severity: 'CRITICAL'
 

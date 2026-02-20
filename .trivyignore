@@ -1,0 +1,3 @@
+# Temporary ignore for Buildpacks bundled binaries (not app code).
+# Remove when builder ships Go >= 1.25.7 in lifecycle/helper binaries.
+CVE-2025-68121
