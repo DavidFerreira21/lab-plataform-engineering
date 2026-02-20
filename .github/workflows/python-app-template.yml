@@ -124,12 +124,13 @@ jobs:
           IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image_name }}
           VERSION=v${{ github.run_number }}
           SHA_TAG=sha-${{ github.sha }}
+          BUILDER_IMAGE=paketobuildpacks/builder-jammy-base:latest
 
           echo "Building version: $VERSION"
 
           pack build $IMAGE_NAME:$VERSION \
             --path ${{ inputs.app_path }} \
-            --builder gcr.io/buildpacks/builder:v1
+            --builder $BUILDER_IMAGE
 
           docker tag $IMAGE_NAME:$VERSION $IMAGE_NAME:latest
           docker tag $IMAGE_NAME:$VERSION $IMAGE_NAME:$SHA_TAG
