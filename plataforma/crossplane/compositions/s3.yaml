@@ -17,6 +17,18 @@ spec:
   # Crossplane 2.x: composição em modo Pipeline.
   mode: Pipeline
   pipeline:
+    - step: environment-configs
+      functionRef:
+        name: function-environment-configs
+      input:
+        apiVersion: environmentconfigs.fn.crossplane.io/v1beta1
+        kind: Input
+        spec:
+          environmentConfigs:
+            - type: Reference
+              ref:
+                name: cluster-aws-metadata
+
     - step: patch-and-transform
       functionRef:
         name: function-patch-and-transform
@@ -40,8 +52,8 @@ spec:
                 providerConfigRef:
                   name: default
             patches:
-              # Nome externo único para evitar colisão global de bucket.
-              - type: CombineFromComposite
+              # Nome externo previsível por conta/região para funcionar em contas diferentes.
+              - type: CombineFromEnvironment
                 toFieldPath: metadata.annotations[crossplane.io/external-name]
                 combine:
                   strategy: string
@@ -50,7 +62,7 @@ spec:
                   variables:
                     - fromFieldPath: spec.parameters.name
                     - fromFieldPath: spec.parameters.region
-                    - fromFieldPath: metadata.uid
+                    - fromFieldPath: accountId
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region
@@ -86,7 +98,7 @@ spec:
                 providerConfigRef:
                   name: default
             patches:
-              - type: CombineFromComposite
+              - type: CombineFromEnvironment
                 toFieldPath: spec.forProvider.bucket
                 combine:
                   strategy: string
@@ -95,7 +107,7 @@ spec:
                   variables:
                     - fromFieldPath: spec.parameters.name
                     - fromFieldPath: spec.parameters.region
-                    - fromFieldPath: metadata.uid
+                    - fromFieldPath: accountId
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region
@@ -114,11 +126,11 @@ spec:
                   bucket: ""
                   rule:
                     - applyServerSideEncryptionByDefault:
-                        - sseAlgorithm: AES256
+                        sseAlgorithm: AES256
                 providerConfigRef:
                   name: default
             patches:
-              - type: CombineFromComposite
+              - type: CombineFromEnvironment
                 toFieldPath: spec.forProvider.bucket
                 combine:
                   strategy: string
@@ -127,7 +139,7 @@ spec:
                   variables:
                     - fromFieldPath: spec.parameters.name
                     - fromFieldPath: spec.parameters.region
-                    - fromFieldPath: metadata.uid
+                    - fromFieldPath: accountId
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region
@@ -145,11 +157,11 @@ spec:
                   region: us-east-1
                   bucket: ""
                   versioningConfiguration:
-                    - status: Enabled
+                    status: Enabled
                 providerConfigRef:
                   name: default
             patches:
-              - type: CombineFromComposite
+              - type: CombineFromEnvironment
                 toFieldPath: spec.forProvider.bucket
                 combine:
                   strategy: string
@@ -158,7 +170,7 @@ spec:
                   variables:
                     - fromFieldPath: spec.parameters.name
                     - fromFieldPath: spec.parameters.region
-                    - fromFieldPath: metadata.uid
+                    - fromFieldPath: accountId
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region

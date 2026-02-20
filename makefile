@@ -16,7 +16,7 @@ PLATFORM?=kind
 EKS_CLUSTER_NAME?=eks-dev
 EKS_NODEGROUP_NAME?=tools
 	
-.PHONY: all-kind all-eks setup cluster-kind cluster-eks install-nginx-kind install-nginx-eks install-argo bootstrap-argo down down-eks help aws-configure tf-backend-bootstrap tf-eks-init tf-eks-apply eks-configure-context show-hosts helm-build
+.PHONY: all-kind all-eks setup cluster-kind cluster-eks install-nginx-kind install-nginx-eks install-argo bootstrap-argo down down-eks help aws-configure tf-backend-bootstrap tf-eks-init tf-eks-apply eks-configure-context show-hosts helm-build set-eks-account-id
 
 # ==========================================
 # COMANDO PRINCIPAL
@@ -250,3 +250,10 @@ helm-build: ## Atualiza dependências Helm (apps + claims Crossplane)
 	@helm dependency build gitops/storage-s3
 	@helm dependency build plataforma/cluster-metadata
 	@echo "✅ Dependências atualizadas."
+
+set-eks-account-id: ## Atualiza account ID no values EKS da app (role ARN IRSA)
+	@if ! command -v aws >/dev/null 2>&1; then echo "❌ AWS CLI não encontrado"; exit 1; fi
+	@ACCOUNT_ID=$$(aws sts get-caller-identity --query Account --output text); \
+	if [ -z "$$ACCOUNT_ID" ]; then echo "❌ Não foi possível obter account ID"; exit 1; fi; \
+	sed -i -E "s#(eks.amazonaws.com/role-arn: \"arn:aws:iam::)[0-9]{12}(:role/api-storage-irsa\")#\1$$ACCOUNT_ID\2#g" gitops/app/values-eks.yaml; \
+	echo "✅ account ID atualizado em gitops/app/values-eks.yaml -> $$ACCOUNT_ID"

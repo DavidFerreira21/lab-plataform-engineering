@@ -3,6 +3,7 @@ import sys
 import json
 import time
 import os
+from functools import lru_cache
 
 import boto3
 from bson import ObjectId
@@ -45,6 +46,33 @@ def get_s3_client():
         )
 
     return boto3.client("s3", **client_kwargs)
+
+
+@lru_cache(maxsize=1)
+def get_aws_account_id():
+    return boto3.client("sts").get_caller_identity()["Account"]
+
+
+def resolve_bucket_name(bucket_name):
+    if "{account_id}" not in bucket_name and "{region}" not in bucket_name:
+        return bucket_name
+
+    resolved = bucket_name.replace("{region}", S3_REGION)
+    if "{account_id}" in resolved:
+        try:
+            account_id = get_aws_account_id()
+        except Exception as exc:
+            log_json(
+                logging.WARNING,
+                "s3_bucket_account_resolution_failed",
+                error_type=type(exc).__name__,
+                error=str(exc),
+                bucket_template=bucket_name,
+            )
+            return resolved
+        resolved = resolved.replace("{account_id}", account_id)
+
+    return resolved
 
 
 def log_json(level, message, **fields):
@@ -178,15 +206,16 @@ async def upload_documento(carro_id: str, documento: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     key = f"{carro_id}/{documento.filename}"
+    bucket_name = resolve_bucket_name(S3_BUCKET)
     try:
-        s3.upload_fileobj(documento.file, S3_BUCKET, key)
+        s3.upload_fileobj(documento.file, bucket_name, key)
     except Exception as exc:
         log_json(
             logging.ERROR,
             "s3_upload_failed",
             error_type=type(exc).__name__,
             error=str(exc),
-            bucket=S3_BUCKET,
+            bucket=bucket_name,
             key=key,
             endpoint=S3_ENDPOINT,
             region=S3_REGION,
@@ -194,4 +223,4 @@ async def upload_documento(carro_id: str, documento: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="upload_failed") from exc
 
     CarroRepo.atualizar_documento(carro_id, key)
-    return {"status": "ok", "bucket": S3_BUCKET, "key": key}
+    return {"status": "ok", "bucket": bucket_name, "key": key}

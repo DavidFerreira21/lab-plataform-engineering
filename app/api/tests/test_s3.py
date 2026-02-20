@@ -54,3 +54,18 @@ def test_get_s3_client_with_static_creds(monkeypatch):
     assert called["service"] == "s3"
     assert called["kwargs"]["aws_access_key_id"] == "test-access"
     assert called["kwargs"]["aws_secret_access_key"] == "test-secret"
+
+
+def test_resolve_bucket_name_replaces_region_and_account(monkeypatch):
+    main.get_aws_account_id.cache_clear()
+    monkeypatch.setattr(main, "S3_REGION", "us-east-1")
+    monkeypatch.setattr(main, "get_aws_account_id", lambda: "123456789012")
+
+    resolved = main.resolve_bucket_name("api-storage-{region}-{account_id}")
+
+    assert resolved == "api-storage-us-east-1-123456789012"
+
+
+def test_resolve_bucket_name_keeps_value_when_no_placeholders():
+    resolved = main.resolve_bucket_name("api-storage-fixed")
+    assert resolved == "api-storage-fixed"

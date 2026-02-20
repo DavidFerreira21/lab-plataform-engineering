@@ -95,7 +95,7 @@ spec:
               spec:
                 deletionPolicy: Orphan
                 forProvider:
-                  assumeRolePolicyDocument: "{}"
+                  assumeRolePolicy: "{}"
                   tags: {}
                 providerConfigRef:
                   name: default
@@ -125,7 +125,7 @@ spec:
                 fromFieldPath: spec.parameters.providerConfigRefName
                 toFieldPath: spec.providerConfigRef.name
               - type: CombineFromEnvironment
-                toFieldPath: spec.forProvider.assumeRolePolicyDocument
+                toFieldPath: spec.forProvider.assumeRolePolicy
                 combine:
                   strategy: string
                   string:

@@ -61,6 +61,7 @@ resource "kubernetes_manifest" "crossplane_environment_config" {
       name = "cluster-aws-metadata"
     }
     data = {
+      accountId          = data.aws_caller_identity.current.account_id
       oidcProviderArn    = module.eks.oidc_provider_arn
       oidcIssuerHostpath = local.oidc_issuer_hostpath
     }
