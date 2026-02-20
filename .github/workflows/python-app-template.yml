@@ -127,6 +127,8 @@ jobs:
           BUILDER_IMAGE=paketobuildpacks/builder-jammy-base:latest
 
           echo "Building version: $VERSION"
+          echo "Using builder: $BUILDER_IMAGE"
+          pack builder inspect $BUILDER_IMAGE || true
 
           pack build $IMAGE_NAME:$VERSION \
             --path ${{ inputs.app_path }} \
