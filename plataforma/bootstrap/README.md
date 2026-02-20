@@ -58,7 +58,7 @@ terraform apply
 - `enable_cluster_creator_admin` / `cluster_creator_arn` / `access_entries` (acesso ao cluster via EKS Access)
 - `enable_eks_oidc_provider` (ativa criacao do OIDC provider no `modules/eks` para uso por IRSA)
 - `enable_crossplane` / `crossplane_namespace` / `crossplane_chart_version` (instalacao do Crossplane via Helm)
-- `crossplane_environment_config_api_version` (apiVersion do `EnvironmentConfig`; default `apiextensions.crossplane.io/v1alpha1` para compatibilidade com chart `1.16.x`)
+- `crossplane_environment_config_api_version` (apiVersion do `EnvironmentConfig`; default `apiextensions.crossplane.io/v1alpha1`)
 - `enable_crossplane_irsa` / `crossplane_irsa_namespace` / `crossplane_irsa_service_account` / `crossplane_irsa_role_name` (IRSA do provider-aws do Crossplane)
 - `enable_crossplane_irsa_serviceaccount_sync` (anota o ServiceAccount do Crossplane automaticamente no cluster)
 - `enable_external_secrets` / `external_secrets_namespace` / `external_secrets_chart_version` (instalacao do External Secrets via Helm)

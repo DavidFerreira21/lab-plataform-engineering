@@ -252,7 +252,7 @@ variable "crossplane_namespace" {
 variable "crossplane_chart_version" {
   type        = string
   description = "Pinned Helm chart version for Crossplane"
-  default     = "1.16.0"
+  default     = "2.2.0"
 }
 
 variable "crossplane_environment_config_api_version" {

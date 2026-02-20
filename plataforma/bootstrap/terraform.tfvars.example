@@ -79,7 +79,7 @@ enable_eks_oidc_provider = true
 
 enable_crossplane               = true
 crossplane_namespace            = "crossplane-system"
-crossplane_chart_version        = "1.16.0"
+crossplane_chart_version        = "2.2.0"
 crossplane_environment_config_api_version = "apiextensions.crossplane.io/v1alpha1"
 
 enable_crossplane_irsa                   = true
