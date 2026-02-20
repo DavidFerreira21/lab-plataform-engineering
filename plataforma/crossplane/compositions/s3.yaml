@@ -76,7 +76,7 @@ spec:
                 fromFieldPath: spec.parameters.providerConfigRefName
                 toFieldPath: spec.providerConfigRef.name
               - type: ToCompositeFieldPath
-                fromFieldPath: metadata.annotations[crossplane.io/external-name]
+                fromFieldPath: status.atProvider.id
                 toFieldPath: status.bucketName
               - type: ToCompositeFieldPath
                 fromFieldPath: status.atProvider.arn
