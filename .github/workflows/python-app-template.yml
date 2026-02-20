@@ -130,7 +130,8 @@ jobs:
 
           pack build $IMAGE_NAME:$VERSION \
             --path ${{ inputs.app_path }} \
-            --builder $BUILDER_IMAGE
+            --builder $BUILDER_IMAGE \
+            --pull-policy always
 
           docker tag $IMAGE_NAME:$VERSION $IMAGE_NAME:latest
           docker tag $IMAGE_NAME:$VERSION $IMAGE_NAME:$SHA_TAG
@@ -139,7 +140,7 @@ jobs:
         # Escaneia dependências e imagem por CVEs críticos
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image_name }}:latest'
+          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image_name }}:v${{ github.run_number }}'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
