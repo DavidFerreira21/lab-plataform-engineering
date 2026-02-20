@@ -1,4 +1,5 @@
 import os
+import sys
 
 from pydantic import BaseModel
 from pymongo import MongoClient
@@ -11,10 +12,25 @@ USE_MONGO = os.getenv("USE_MONGO", "false").lower() == "true"
 
 # --- CONFIGURAÇÃO SQLITE ---
 SQLALCHEMY_DATABASE_URL = "sqlite:///./carros.db"
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
-SessionLocal = sessionmaker(bind=engine)
+
+# Buildpacks minimalistas podem não trazer libsqlite3 do SO.
+# Nesse caso, tenta usar pysqlite3-binary para fornecer o módulo sqlite3.
+if not USE_MONGO:
+    try:
+        import sqlite3  # noqa: F401
+    except ImportError:
+        import pysqlite3
+
+        sys.modules["sqlite3"] = pysqlite3
+
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    )
+    SessionLocal = sessionmaker(bind=engine)
+else:
+    engine = None
+    SessionLocal = sessionmaker()
+
 Base = declarative_base()
 
 

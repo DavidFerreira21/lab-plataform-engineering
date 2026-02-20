@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 sqlalchemy
+pysqlite3-binary
 pymongo
 motor
 python-dotenv
