@@ -15,7 +15,7 @@ crossplane-irsa-claim:
     namespace: app
     serviceAccountNamespace: app
     serviceAccountName: api-carro
-    policyName: "api-storage-irsa-policy"
+    policyName: "api-storage-irsa-policy-v2"
     policyDocument: ""
     policyDescription: "S3 access policy for api workload"
     policyPath: "/"
