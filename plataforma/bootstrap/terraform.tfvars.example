@@ -87,6 +87,7 @@ crossplane_irsa_namespace                = "crossplane-system"
 crossplane_irsa_service_account          = "provider-aws"
 crossplane_irsa_role_name                = ""
 enable_crossplane_irsa_serviceaccount_sync = true
+enable_crossplane_irsa_iam_full_access   = true
 
 # #############################################
 # External Secrets
@@ -98,6 +99,18 @@ external_secrets_chart_version = "0.14.4"
 enable_external_secrets_irsa = true
 external_secrets_irsa_service_account = "external-secrets"
 external_secrets_irsa_role_name = ""
+
+# #############################################
+# Argo CD (opcional via Terraform/Helm)
+# #############################################
+
+enable_argocd       = false
+argocd_namespace    = "argocd"
+argocd_chart_version = "7.8.6"
+
+enable_ingress_nginx        = false
+ingress_nginx_namespace     = "ingress-nginx"
+ingress_nginx_chart_version = "4.12.0"
 
 # #############################################
 # SSM Parameter Store (metadados do cluster)

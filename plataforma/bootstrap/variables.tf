@@ -307,6 +307,12 @@ variable "enable_crossplane_irsa_serviceaccount_sync" {
   }
 }
 
+variable "enable_crossplane_irsa_iam_full_access" {
+  type        = bool
+  description = "Attach IAMFullAccess to Crossplane IRSA role (lab-friendly; use least privilege in production)"
+  default     = true
+}
+
 ##############################################
 # External Secrets
 ##############################################
@@ -349,6 +355,46 @@ variable "external_secrets_irsa_role_name" {
   type        = string
   description = "IAM role name for external-secrets IRSA (empty uses <cluster_name>-external-secrets-irsa-role)"
   default     = ""
+}
+
+##############################################
+# Argo CD (opcional via Terraform)
+##############################################
+
+variable "enable_argocd" {
+  type        = bool
+  description = "Install Argo CD via Helm in the EKS cluster"
+  default     = false
+}
+
+variable "argocd_namespace" {
+  type        = string
+  description = "Namespace for Argo CD Helm release"
+  default     = "argocd"
+}
+
+variable "argocd_chart_version" {
+  type        = string
+  description = "Pinned Helm chart version for Argo CD"
+  default     = "7.8.6"
+}
+
+variable "enable_ingress_nginx" {
+  type        = bool
+  description = "Install ingress-nginx via Helm in the EKS cluster"
+  default     = false
+}
+
+variable "ingress_nginx_namespace" {
+  type        = string
+  description = "Namespace for ingress-nginx Helm release"
+  default     = "ingress-nginx"
+}
+
+variable "ingress_nginx_chart_version" {
+  type        = string
+  description = "Pinned Helm chart version for ingress-nginx"
+  default     = "4.12.0"
 }
 
 ##############################################

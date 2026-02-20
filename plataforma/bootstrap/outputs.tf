@@ -47,7 +47,7 @@ output "kms_key_arn" {
 ##############################################
 
 output "crossplane_irsa_role_arn" {
-  value       = var.enable_crossplane_irsa ? aws_iam_role.crossplane_irsa[0].arn : null
+  value       = module.addons.crossplane_irsa_role_arn
   description = "IAM role ARN to annotate in the Crossplane provider ServiceAccount"
 }
 
@@ -57,21 +57,31 @@ output "eks_oidc_provider_arn" {
 }
 
 output "external_secrets_release_name" {
-  value       = var.enable_external_secrets ? helm_release.external_secrets[0].name : null
+  value       = module.addons.external_secrets_release_name
   description = "Helm release name for external-secrets"
 }
 
 output "external_secrets_irsa_role_arn" {
-  value       = var.enable_external_secrets && var.enable_external_secrets_irsa ? aws_iam_role.external_secrets_irsa[0].arn : null
+  value       = module.addons.external_secrets_irsa_role_arn
   description = "IAM role ARN used by external-secrets ServiceAccount IRSA"
 }
 
 output "crossplane_release_name" {
-  value       = var.enable_crossplane ? helm_release.crossplane[0].name : null
+  value       = module.addons.crossplane_release_name
   description = "Helm release name for crossplane"
 }
 
 output "cluster_metadata_ssm_base_path" {
   value       = var.enable_cluster_metadata_ssm ? "/${trim(var.cluster_metadata_ssm_prefix, "/")}/${var.cluster_name}" : null
   description = "Base SSM path used to store cluster metadata"
+}
+
+output "argocd_release_name" {
+  value       = module.addons.argocd_release_name
+  description = "Helm release name for Argo CD (when enabled via Terraform)"
+}
+
+output "ingress_nginx_release_name" {
+  value       = module.addons.ingress_nginx_release_name
+  description = "Helm release name for ingress-nginx (when enabled via Terraform)"
 }

@@ -6,15 +6,18 @@ Esta pasta eh o **raiz do bootstrap** via Terraform. Aqui ficam as chamadas dos 
 
 ```text
 plataforma/bootstrap/
-├── crossplane.tf
+├── addons.tf
 ├── data.tf
-├── external-secrets.tf
 ├── main-eks.tf
 ├── providers.tf
 ├── outputs.tf
 ├── terraform.tfvars
 ├── variables.tf
 └── modules/
+    ├── addons/
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   └── outputs.tf
     └── eks/
         ├── main.tf
         ├── variables.tf
@@ -23,6 +26,8 @@ plataforma/bootstrap/
 
 ## Modulos
 - `modules/eks`: provisiona um cluster EKS com Node Group e roles IAM. A VPC default eh selecionada na raiz, mas o modulo aceita qualquer VPC.
+- `modules/addons`: instala add-ons do cluster (Crossplane, External Secrets e, opcionalmente, Argo CD) com flags de enable.
+  - Tambem suporta instalacao opcional do `ingress-nginx` via Helm.
 
 ## Uso rapido
 
@@ -61,8 +66,11 @@ terraform apply
 - `crossplane_environment_config_api_version` (apiVersion do `EnvironmentConfig`; default `apiextensions.crossplane.io/v1beta1`)
 - `enable_crossplane_irsa` / `crossplane_irsa_namespace` / `crossplane_irsa_service_account` / `crossplane_irsa_role_name` (IRSA do provider-aws do Crossplane)
 - `enable_crossplane_irsa_serviceaccount_sync` (anota o ServiceAccount do Crossplane automaticamente no cluster)
+- `enable_crossplane_irsa_iam_full_access` (anexa IAMFullAccess na IRSA do Crossplane para laboratorios)
 - `enable_external_secrets` / `external_secrets_namespace` / `external_secrets_chart_version` (instalacao do External Secrets via Helm)
 - `enable_external_secrets_irsa` / `external_secrets_irsa_service_account` / `external_secrets_irsa_role_name` (IRSA do External Secrets para leitura de SSM)
+- `enable_argocd` / `argocd_namespace` / `argocd_chart_version` (instalacao opcional do Argo CD via Helm)
+- `enable_ingress_nginx` / `ingress_nginx_namespace` / `ingress_nginx_chart_version` (instalacao opcional do ingress-nginx via Helm)
 - `enable_cluster_metadata_ssm` / `cluster_metadata_ssm_prefix` (grava metadados do cluster no SSM para automacoes futuras de IRSA)
 - `node_instance_types` (default: `t3.medium`)
 - `node_min_size`, `node_max_size`, `node_desired_size`
@@ -91,6 +99,7 @@ Observacao:
 - Com `enable_crossplane = true`, o bootstrap instala o Crossplane no EKS via chart Helm.
 - Com `enable_crossplane_irsa = true`, o bootstrap cria role IRSA para o ServiceAccount do Crossplane.
 - O attach `PowerUserAccess` na IRSA do Crossplane e intencional neste ambiente de laboratorio. Em ambiente produtivo, substituir por policy de menor privilegio.
+- Opcionalmente, `enable_crossplane_irsa_iam_full_access = true` adiciona `IAMFullAccess` para evitar falhas de `iam:Get*`/`iam:Create*` durante composicao IAM no lab.
 - Com `enable_crossplane_irsa_serviceaccount_sync = true`, o bootstrap cria/sincroniza Namespace + ServiceAccount e aplica a annotation `eks.amazonaws.com/role-arn` automaticamente.
 - Com `enable_external_secrets = true`, o bootstrap instala o chart `external-secrets` no cluster EKS e aplica `installCRDs=true`.
 - Com `enable_external_secrets_irsa = true`, o bootstrap cria IRSA de menor privilegio para o ServiceAccount do External Secrets (leitura de parametros em `/<prefix>/<cluster_name>/*`).
@@ -99,9 +108,8 @@ Observacao:
 ## Arquivos principais
 - `main-eks.tf`: chamada do modulo EKS e resolucao de VPC/subnets.
 - `providers.tf`: providers e backend remoto S3 do Terraform state.
-- `crossplane.tf`: instalacao do Crossplane via Helm + IRSA do Crossplane (AWS/Kubernetes).
-- `data.tf`: data sources centralizados (rede, autenticacao EKS e policy docs IAM).
-- `external-secrets.tf`: instalacao do External Secrets via Helm.
+- `addons.tf`: chamada do modulo de add-ons (Crossplane, External Secrets e Argo CD opcional).
+- `data.tf`: data sources centralizados (rede, autenticacao EKS e identidade AWS para SSM).
 - `ssm-parameters.tf`: publicacao de metadados do cluster no SSM Parameter Store.
 
 Observacao tecnica:
