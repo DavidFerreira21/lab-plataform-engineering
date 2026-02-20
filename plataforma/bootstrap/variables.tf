@@ -258,7 +258,7 @@ variable "crossplane_chart_version" {
 variable "crossplane_environment_config_api_version" {
   type        = string
   description = "API version used for Crossplane EnvironmentConfig"
-  default     = "apiextensions.crossplane.io/v1alpha1"
+  default     = "apiextensions.crossplane.io/v1beta1"
 }
 
 ##############################################
