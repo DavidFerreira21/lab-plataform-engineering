@@ -25,11 +25,10 @@ spec:
       input:
         apiVersion: pt.fn.crossplane.io/v1beta1
         kind: Resources
-        environment:
-          environmentConfigs:
-            - type: Reference
-              ref:
-                name: cluster-aws-metadata
+        environmentConfigs:
+          - type: Reference
+            ref:
+              name: cluster-aws-metadata
         resources:
           # 1) Managed policy dedicada ao workload.
           - name: policy

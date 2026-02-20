@@ -75,6 +75,7 @@ spec:
         kind: BucketPublicAccessBlock
         spec:
           forProvider:
+            region: us-east-1
             blockPublicAcls: true
             blockPublicPolicy: true
             ignorePublicAcls: true
@@ -94,6 +95,9 @@ spec:
               - fromFieldPath: spec.parameters.region
               - fromFieldPath: metadata.uid
         - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
           fromFieldPath: spec.parameters.providerConfigRefName
           toFieldPath: spec.providerConfigRef.name
       readinessChecks:
@@ -109,6 +113,7 @@ spec:
         kind: BucketServerSideEncryptionConfiguration
         spec:
           forProvider:
+            region: us-east-1
             bucket: ""
             rule:
               - applyServerSideEncryptionByDefault:
@@ -127,6 +132,9 @@ spec:
               - fromFieldPath: spec.parameters.region
               - fromFieldPath: metadata.uid
         - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
           fromFieldPath: spec.parameters.providerConfigRefName
           toFieldPath: spec.providerConfigRef.name
       readinessChecks:
@@ -142,6 +150,7 @@ spec:
         kind: BucketVersioning
         spec:
           forProvider:
+            region: us-east-1
             bucket: ""
             versioningConfiguration:
               - status: Enabled
@@ -158,6 +167,9 @@ spec:
               - fromFieldPath: spec.parameters.name
               - fromFieldPath: spec.parameters.region
               - fromFieldPath: metadata.uid
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.region
+          toFieldPath: spec.forProvider.region
         - type: FromCompositeFieldPath
           fromFieldPath: spec.parameters.providerConfigRefName
           toFieldPath: spec.providerConfigRef.name

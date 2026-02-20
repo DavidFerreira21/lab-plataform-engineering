@@ -19,7 +19,7 @@ crossplane-irsa-claim:
     policyDocument: ""
     policyDescription: "S3 access policy for api workload"
     policyPath: "/"
-    bucketName: "api-storage"
+    bucketName: "api-storage-*"
     bucketActions:
       - s3:ListBucket
     objectActions:
