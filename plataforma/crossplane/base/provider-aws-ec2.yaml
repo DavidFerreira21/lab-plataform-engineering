@@ -1,0 +1,12 @@
+# Instala o provider AWS específico de EC2.
+# RuntimeConfig aponta para o padrão de execução com IRSA.
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-ec2
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-ec2:v2.4.0
+  runtimeConfigRef:
+    name: aws-irsa

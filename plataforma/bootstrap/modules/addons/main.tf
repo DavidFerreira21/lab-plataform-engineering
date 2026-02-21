@@ -72,6 +72,8 @@ resource "kubernetes_manifest" "crossplane_environment_config" {
       accountId          = data.aws_caller_identity.current.account_id
       oidcProviderArn    = var.oidc_provider_arn
       oidcIssuerHostpath = local.oidc_issuer_hostpath
+      vpcId              = var.cluster_vpc_id
+      vpcCidrBlock       = data.aws_vpc.cluster.cidr_block
     }
   }
 

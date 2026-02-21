@@ -8,6 +8,9 @@ locals {
 
 data "aws_partition" "current" {}
 data "aws_caller_identity" "current" {}
+data "aws_vpc" "cluster" {
+  id = var.cluster_vpc_id
+}
 
 data "aws_iam_policy_document" "crossplane_irsa_trust" {
   count = var.enable_crossplane_irsa && var.enable_eks_oidc_provider ? 1 : 0

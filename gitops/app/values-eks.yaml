@@ -39,10 +39,7 @@ app-template:
           name: "api-garagem-db-conn"
           key: "port"
     - name: DB_NAME
-      valueFrom:
-        secretKeyRef:
-          name: "api-garagem-db-conn"
-          key: "database"
+      value: "garagem"
     - name: DB_USER
       valueFrom:
         secretKeyRef:

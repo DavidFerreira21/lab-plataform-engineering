@@ -8,6 +8,7 @@ module "addons" {
   cluster_name        = module.eks.cluster_name
   cluster_oidc_issuer = module.eks.cluster_oidc_issuer
   oidc_provider_arn   = module.eks.oidc_provider_arn
+  cluster_vpc_id      = module.eks.vpc_id
 
   enable_eks_oidc_provider    = var.enable_eks_oidc_provider
   aws_region                  = var.aws_region

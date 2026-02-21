@@ -12,6 +12,18 @@ spec:
     kind: XRDS
   mode: Pipeline
   pipeline:
+    - step: environment-configs
+      functionRef:
+        name: function-environment-configs
+      input:
+        apiVersion: environmentconfigs.fn.crossplane.io/v1beta1
+        kind: Input
+        spec:
+          environmentConfigs:
+            - type: Reference
+              ref:
+                name: cluster-aws-metadata
+
     - step: patch-and-transform
       functionRef:
         name: function-patch-and-transform
@@ -19,6 +31,99 @@ spec:
         apiVersion: pt.fn.crossplane.io/v1beta1
         kind: Resources
         resources:
+          - name: db-security-group
+            base:
+              apiVersion: ec2.aws.upbound.io/v1beta1
+              kind: SecurityGroup
+              spec:
+                deletionPolicy: Orphan
+                forProvider:
+                  description: Security group for platform RDS instance
+                  name: ""
+                  region: us-east-1
+                  vpcId: ""
+                  tags: {}
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.name
+                toFieldPath: spec.forProvider.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-sg"
+              - type: CombineFromComposite
+                toFieldPath: spec.forProvider.description
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "Security group for %s"
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+              - type: CombineFromEnvironment
+                toFieldPath: spec.forProvider.vpcId
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "%s"
+                  variables:
+                    - fromFieldPath: vpcId
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.region
+                toFieldPath: spec.forProvider.region
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.deletionPolicy
+                toFieldPath: spec.deletionPolicy
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.providerConfigRefName
+                toFieldPath: spec.providerConfigRef.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.tags
+                toFieldPath: spec.forProvider.tags
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.id
+                toFieldPath: status.securityGroupId
+
+          - name: db-security-group-ingress
+            base:
+              apiVersion: ec2.aws.upbound.io/v1beta1
+              kind: SecurityGroupRule
+              spec:
+                deletionPolicy: Orphan
+                forProvider:
+                  region: us-east-1
+                  type: ingress
+                  protocol: tcp
+                  fromPort: 5432
+                  toPort: 5432
+                  cidrBlocks:
+                    - ""
+                  securityGroupId: ""
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.region
+                toFieldPath: spec.forProvider.region
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.deletionPolicy
+                toFieldPath: spec.deletionPolicy
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.providerConfigRefName
+                toFieldPath: spec.providerConfigRef.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: status.securityGroupId
+                toFieldPath: spec.forProvider.securityGroupId
+              - type: CombineFromEnvironment
+                toFieldPath: spec.forProvider.cidrBlocks[0]
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "%s"
+                  variables:
+                    - fromFieldPath: vpcCidrBlock
+
           - name: db-instance
             base:
               apiVersion: rds.aws.upbound.io/v1beta1
@@ -38,6 +143,7 @@ spec:
                   publiclyAccessible: false
                   skipFinalSnapshot: true
                   autoMinorVersionUpgrade: true
+                  vpcSecurityGroupIds: []
                   passwordSecretRef:
                     namespace: app
                     name: ""
@@ -116,6 +222,9 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.tags
                 toFieldPath: spec.forProvider.tags
+              - type: FromCompositeFieldPath
+                fromFieldPath: status.securityGroupId
+                toFieldPath: spec.forProvider.vpcSecurityGroupIds[0]
               - type: ToCompositeFieldPath
                 fromFieldPath: status.atProvider.address
                 toFieldPath: status.endpoint

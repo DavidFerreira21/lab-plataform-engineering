@@ -4,7 +4,7 @@ Este diretorio define os produtos de plataforma no Crossplane.
 
 ## Estrutura
 - `base/`: install, providers, runtime config, function, provider config
-- `xrd/`: contratos (`S3`, `IRSA`)
+- `xrd/`: contratos (`S3`, `IRSA`, `RDS`)
 - `compositions/`: implementacao AWS
 
 ## Ordem de sync (Argo)
@@ -43,7 +43,9 @@ OIDC e lido dinamicamente do `EnvironmentConfig` `cluster-aws-metadata`.
 - Composition: `compositions/rds.yaml`
 
 A composicao cria:
-- `Instance` (RDS)
+- `SecurityGroup` (EC2)
+- `SecurityGroupRule` de ingress para a VPC
+- `Instance` (RDS) associada ao SG criado na composicao
 
 Parametros principais no claim:
 - `engine` / `engineVersion`

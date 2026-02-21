@@ -14,6 +14,11 @@ variable "oidc_provider_arn" {
   default     = null
 }
 
+variable "cluster_vpc_id" {
+  type        = string
+  description = "VPC ID where EKS cluster is running"
+}
+
 variable "enable_eks_oidc_provider" {
   type        = bool
   description = "Whether EKS OIDC provider is enabled"
