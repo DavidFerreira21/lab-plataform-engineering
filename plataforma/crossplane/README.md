@@ -1,85 +1,112 @@
-# Crossplane (S3 + IRSA + RDS)
+# Crossplane (catalogo de produtos da plataforma)
 
-Este diretorio define os produtos de plataforma no Crossplane.
+Este diretorio define contratos e implementacoes dos produtos de infraestrutura usados pelo lab.
 
 ## Estrutura
-- `base/`: install, providers, runtime config, function, provider config
-- `xrd/`: contratos (`S3`, `IRSA`, `RDS`)
-- `compositions/`: implementacao AWS
+- `base/`: instalacao base do Crossplane (providers, runtime config, functions, provider-config).
+- `xrd/`: contratos de produto (XRDs e claims).
+- `compositions/`: implementacao AWS de cada produto.
 
-## Ordem de sync (Argo)
-- `-2`: namespace/runtime base
-- `-1`: providers + functions
+## Produtos disponiveis
+- S3 (`S3` / `XS3`)
+- IRSA (`IRSA` / `XIRSA`)
+- RDS (`RDS` / `XRDS`)
+
+## Ordem de sync no Argo (`platform-core`)
+- `-2`: namespace/base runtime
+- `-1`: providers e functions
 - `0`: provider config
 - `1`: XRDs
 - `2`: compositions
-- `3/4`: claims (app `garagem-infra`)
+
+## Base instalada (`base/`)
+- Functions:
+  - `function-environment-configs`
+  - `function-patch-and-transform`
+- Providers AWS:
+  - `provider-aws-s3`
+  - `provider-aws-iam`
+  - `provider-aws-rds`
+  - `provider-aws-ec2`
+- RuntimeConfig:
+  - `aws-irsa`
 
 ## Produto S3
-- XRD: `xrd/s3-xrd.yaml`
-- Composition: `compositions/s3.yaml`
+Arquivos:
+- `xrd/s3-xrd.yaml`
+- `compositions/s3.yaml`
 
-A composicao cria:
+Implementacao:
 - Bucket
 - BucketPublicAccessBlock
 - BucketServerSideEncryptionConfiguration
 - BucketVersioning
 
-Tambem publica dados de conexao (`bucketName`, `bucketArn`) para secret.
+Conexao publicada:
+- `bucketName`
+- `bucketArn`
 
 ## Produto IRSA
-- XRD: `xrd/irsa-xrd.yaml`
-- Composition: `compositions/irsa.yaml`
+Arquivos:
+- `xrd/irsa-xrd.yaml`
+- `compositions/irsa.yaml`
 
-A composicao cria:
+Implementacao:
 - IAM Policy
 - IAM Role
-- IAM RolePolicyAttachment
+- RolePolicyAttachment
 
-OIDC e lido dinamicamente do `EnvironmentConfig` `cluster-aws-metadata`.
+A trust policy e montada dinamicamente usando dados do `EnvironmentConfig` (`oidcProviderArn`, `oidcIssuerHostpath`).
 
 ## Produto RDS
-- XRD: `xrd/rds-xrd.yaml`
-- Composition: `compositions/rds.yaml`
+Arquivos:
+- `xrd/rds-xrd.yaml`
+- `compositions/rds.yaml`
 
-A composicao cria:
-- `SecurityGroup` (EC2)
-- `SecurityGroupRule` de ingress para a VPC
-- `Instance` (RDS) associada ao SG criado na composicao
+Implementacao:
+- EC2 SecurityGroup
+- EC2 SecurityGroupRule (ingress 5432 com `vpcCidrBlock`)
+- RDS Instance associada ao SG criado na propria composition
 
-Parametros principais no claim:
-- `engine` / `engineVersion`
-- `instanceClass`
-- `allocatedStorage`
-- `dbName`
-- `username`
-- `passwordSecretName` / `passwordSecretNamespace`
-
-Saida de conexao:
+Conexao publicada:
 - `host`
 - `port`
 - `username`
 - `database`
 
-## Integracao com apps
-- Claims ficam em `gitops/storage-s3`
-- `S3` claim usa `connectionSecretName: api-storage-conn`
-- API (chart `gitops/app/values-eks.yaml`) le `S3_BUCKET` desse secret
-- `RDS` claim usa `connectionSecretName: api-garagem-db-conn`
+## Integracao com workloads
+Claims sao aplicadas em `gitops/storage-s3` (app `garagem-infra`):
+- `S3` claim -> secret `api-storage-conn`
+- `IRSA` claim -> annotation da service account consumidora
+- `RDS` claim -> secret `api-garagem-db-conn`
 
-## Convencao de bucket
-No estado atual da composicao S3, o nome externo do bucket segue:
-- `api-storage-us-east-1-<accountId>`
+A API em `gitops/app/values-eks.yaml` consome esses secrets por `valueFrom.secretKeyRef`.
 
-Isso evita fixar account id manualmente no git.
+## Padroes adotados no lab
+- Nome de bucket S3 deterministico por conta (evita colisao entre contas).
+- `deletionPolicy` default dos produtos sensiveis em `Orphan` para evitar perda acidental.
+- Reconciliacao declarativa: app nao descobre nome de recurso em runtime; recebe via secret.
 
 ## Troubleshooting rapido
 - Provider nao sobe:
-  - `kubectl get providers.pkg.crossplane.io`
-  - `kubectl get providerrevision.pkg.crossplane.io`
-- Claim IRSA nao fica Ready:
-  - validar `EnvironmentConfig cluster-aws-metadata`
-  - validar CRDs/functions instaladas
-- Upload da API falha com `NoSuchBucket`:
-  - validar `S3_BUCKET` vindo de `api-storage-conn`
-  - validar status do claim `s3.platform.lab`
+```bash
+kubectl get providers.pkg.crossplane.io
+kubectl get providerrevision.pkg.crossplane.io
+```
+
+- Claim nao fica `Ready`:
+```bash
+kubectl -n app get <claim-kind> <claim-name> -o yaml
+kubectl -n app get x<claim-kind> -l crossplane.io/claim-name=<claim-name> -o yaml
+```
+
+- Erro de IRSA (`InvalidIdentityToken` / `AccessDenied`):
+1. validar issuer do cluster
+2. validar OIDC provider na conta ativa
+3. validar trust policy da role
+4. validar annotation da service account usada no deploy
+
+- Erro S3 `NoSuchBucket`:
+1. validar claim S3 `Ready`
+2. validar secret `api-storage-conn`
+3. validar env `S3_BUCKET` no deployment

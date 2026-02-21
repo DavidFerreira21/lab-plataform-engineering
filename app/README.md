@@ -1,11 +1,12 @@
 # Apps (API + Web)
 
-Esta pasta contem a camada de aplicacao do lab: **API (FastAPI)** e **Web (Flask)**.
+Camada de aplicacao do lab, composta por API e Web.
 
 ## Servicos
+### API (`app/api`)
+Stack: FastAPI + SQLAlchemy + boto3.
 
-### API (FastAPI)
-Endpoints principais:
+Endpoints:
 - `GET /carros`
 - `POST /carros`
 - `DELETE /carros/{id}`
@@ -13,25 +14,25 @@ Endpoints principais:
 - `GET /healthz`
 
 Persistencia:
-- PostgreSQL (RDS) em EKS via variaveis `DB_*` ou `DATABASE_URL`
-- SQLite como fallback local
+- EKS: PostgreSQL (RDS) via `DB_*` ou `DATABASE_URL`.
+- Local: fallback SQLite.
 
-Upload S3:
-- A API usa **diretamente** o valor de `S3_BUCKET`
-- Nao existe mais resolucao dinamica de nome de bucket dentro do codigo
-- Em EKS, `S3_BUCKET` vem do secret `api-storage-conn` (`bucketName`)
+Storage:
+- Upload para S3 usando `S3_BUCKET` recebido via ambiente.
+- A API nao resolve nome de bucket dinamicamente no codigo.
 
-### Web (Flask)
-Rotas principais:
+### Web (`app/web`)
+Stack: Flask.
+
+Rotas:
 - `/`
 - `/cadastrar`
 - `/excluir/<id>`
 - `/healthz`
 
-A Web consome a API pela variavel `API_URL`.
+A Web chama a API pela variavel `API_URL`.
 
 ## Variaveis de ambiente
-
 ### API
 - `DATABASE_URL` (opcional)
 - `DB_HOST`
@@ -50,21 +51,19 @@ A Web consome a API pela variavel `API_URL`.
 - `API_URL`
 - `FLASK_DEBUG`
 
-## Helm values
+## Configuracao por ambiente
+### Kind
+- Values API: `gitops/app/values-kind.yaml`
+- Storage local: MinIO
 
-### API
-- `gitops/app/values-kind.yaml`
-  - fluxo local com MinIO
-- `gitops/app/values-eks.yaml`
-  - `S3_BUCKET` via `secretKeyRef` em `api-storage-conn.bucketName`
-  - `DB_*` via secrets `api-garagem-db-conn` e `api-garagem-db-auth`
-  - service account com annotation IRSA
+### EKS
+- Values API: `gitops/app/values-eks.yaml`
+- `S3_BUCKET` vem de `api-storage-conn.bucketName`
+- `DB_HOST`/`DB_PORT`/`DB_USER` via `api-garagem-db-conn`
+- `DB_PASSWORD` via `api-garagem-db-auth`
+- ServiceAccount da API recebe annotation IRSA
 
-### Web
-- `gitops/web/values.yaml`
-
-## Rodar localmente
-
+## Executar localmente
 ### API
 ```bash
 cd app/api
@@ -84,7 +83,6 @@ python app.py
 ```
 
 ## Testes
-
 ### API
 ```bash
 cd app/api
@@ -97,6 +95,8 @@ cd app/web
 pytest
 ```
 
-## Observacoes
-- Upload grande pode exigir ajuste de ingress (`proxy-body-size`).
-- Em EKS, se houver erro de upload S3, validar primeiro: role IRSA, policy e valor do secret `api-storage-conn`.
+## Troubleshooting rapido
+- `NoSuchBucket`: validar secret `api-storage-conn` e env `S3_BUCKET` no deploy.
+- `InvalidIdentityToken`: validar OIDC provider/trust policy/annotation IRSA.
+- Timeout no Postgres: validar SG e regra de ingress do RDS criada pelo Crossplane.
+- `relation ... does not exist`: schema/tabela ainda nao criada no banco alvo.

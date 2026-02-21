@@ -1,6 +1,6 @@
 # Bootstrap (Terraform)
 
-Pasta raiz do bootstrap Terraform para EKS e add-ons.
+Diretorio de bootstrap AWS/EKS do lab. Aqui ficam rede, cluster e add-ons base necessarios antes do GitOps aplicar produtos e workloads.
 
 ## Estrutura
 
@@ -12,29 +12,27 @@ plataforma/bootstrap/
 ├── outputs.tf
 ├── providers.tf
 ├── ssm-parameters.tf
-├── terraform.tfvars
 ├── variables.tf
 └── modules/
     ├── eks/
-    │   └── README.md
     └── addons/
-        ├── data.tf
-        ├── main.tf
-        ├── variables.tf
-        ├── outputs.tf
-        └── README.md
 ```
 
 ## Modulos
-- `modules/eks`: cluster EKS, node group, addons EKS managed e OIDC provider.
-- `modules/addons`: Helm addons + IAM IRSA para componentes de plataforma.
+- `modules/eks`: cluster EKS, node group, addons gerenciados da AWS, OIDC provider.
+- `modules/addons`: Helm add-ons (Crossplane, External Secrets, ArgoCD, ingress-nginx, Kyverno) + IRSA de plataforma.
 
-## Add-ons suportados (flags)
+## Add-ons controlados por flags
 - `enable_crossplane`
 - `enable_external_secrets`
 - `enable_argocd`
 - `enable_ingress_nginx`
 - `enable_kyverno`
+
+## Pre-requisitos
+- Terraform instalado.
+- AWS CLI autenticado na conta alvo.
+- Permissao para criar IAM, EKS, EC2, SSM e Helm releases via provider Kubernetes.
 
 ## Fluxo rapido
 ```bash
@@ -44,29 +42,45 @@ terraform plan
 terraform apply
 ```
 
-## Fluxo usado no make (`make all-eks`)
-O target `tf-eks-apply` executa em 3 fases:
+## Fluxo usado no `make all-eks`
+O target `tf-eks-apply` executa em 3 fases para evitar corrida de CRDs:
 1. `terraform apply -target=module.eks`
 2. `terraform apply -target=module.addons.helm_release.crossplane`
 3. `terraform apply` completo
 
-Isso reduz erros de dependencia de CRDs do Crossplane no primeiro bootstrap.
-
 ## Backend remoto
-- S3 backend definido em `providers.tf`
-- lockfile nativo no S3 (`use_lockfile = true`)
-- bucket de state criado por `make tf-backend-bootstrap`
+Configurado em `providers.tf`:
+- state em S3
+- `use_lockfile = true`
 
-## Metadados de cluster (SSM)
-`ssm-parameters.tf` grava dados em SSM para uso por automacoes:
+O bucket de state pode ser criado por:
+```bash
+make tf-backend-bootstrap
+```
+
+## Metadados de cluster para plataforma
+`ssm-parameters.tf` publica em SSM:
 - account id
 - cluster name/region
-- OIDC issuer
-- OIDC hostpath
+- OIDC issuer e hostpath
 - OIDC provider ARN
 
-Esses dados sao consumidos no cluster via External Secrets -> `EnvironmentConfig` do Crossplane.
+Esses dados alimentam o `cluster-metadata` e, no cluster, o `EnvironmentConfig` do Crossplane.
 
 ## Observacoes praticas
-- Para EKS deste lab, o ArgoCD e instalado via Terraform (`enable_argocd=true`) e o `bootstrap-argo PLATFORM=eks` aplica somente as Applications.
-- Se OIDC/IRSA quebrar ao trocar de conta, validar primeiro `aws sts get-caller-identity`, issuer do cluster e annotation da service account.
+- Em EKS deste lab, ArgoCD e instalado via Terraform (`enable_argocd=true`).
+- `bootstrap-argo PLATFORM=eks` depois aplica apenas as Applications.
+- Se IRSA falhar apos trocar de conta, valide na ordem:
+1. `aws sts get-caller-identity`
+2. OIDC issuer do cluster
+3. annotation da service account
+4. trust policy da role
+
+## Comandos uteis
+```bash
+# contexto kubectl do cluster criado
+make eks-configure-context
+
+# outputs principais
+cd plataforma/bootstrap && terraform output
+```

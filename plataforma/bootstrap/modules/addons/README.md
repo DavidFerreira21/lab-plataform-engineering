@@ -1,12 +1,12 @@
 # Module Addons
 
-Modulo Terraform para instalar e integrar add-ons no cluster EKS.
+Modulo Terraform para instalar add-ons de cluster e integrar IAM/IRSA da plataforma.
 
-## O que o modulo faz
-- Instala add-ons via Helm (com flags de enable)
-- Cria IRSA para Crossplane provider
-- Cria IRSA para External Secrets
-- Publica `EnvironmentConfig` no Crossplane com dados dinamicos da conta/cluster
+## Responsabilidades do modulo
+- Instalar add-ons via Helm com flags de enable.
+- Criar IRSA do Crossplane provider.
+- Criar IRSA do External Secrets.
+- Publicar `EnvironmentConfig` (`cluster-aws-metadata`) com contexto dinamico da conta/cluster.
 
 ## Add-ons suportados
 - Crossplane
@@ -16,10 +16,10 @@ Modulo Terraform para instalar e integrar add-ons no cluster EKS.
 - Kyverno
 
 ## Arquivos
-- `data.tf`: data sources e locals (ex.: `oidc_issuer_hostpath`)
-- `main.tf`: recursos IAM + Helm releases + manifests Kubernetes
-- `variables.tf`: entradas/flags do modulo
-- `outputs.tf`: nomes de releases e ARNs principais
+- `data.tf`: data sources e locals.
+- `main.tf`: IAM, Helm releases e manifests Kubernetes.
+- `variables.tf`: interface do modulo.
+- `outputs.tf`: outputs de releases e ARNs.
 
 ## Inputs principais
 - `cluster_name`
@@ -27,18 +27,26 @@ Modulo Terraform para instalar e integrar add-ons no cluster EKS.
 - `oidc_provider_arn`
 - `cluster_vpc_id`
 - `enable_eks_oidc_provider`
-- flags:
-  - `enable_crossplane`
-  - `enable_external_secrets`
-  - `enable_argocd`
-  - `enable_ingress_nginx`
-  - `enable_kyverno`
+- flags `enable_*` dos add-ons
+
+## EnvironmentConfig publicado
+Recurso: `kubernetes_manifest.crossplane_environment_config`
+
+Campos publicados em `data`:
+- `accountId`
+- `oidcProviderArn`
+- `oidcIssuerHostpath`
+- `vpcId`
+- `vpcCidrBlock`
+
+Esses campos sao consumidos pelas Compositions (ex.: trust policy IRSA e SG/regra de rede do RDS).
 
 ## Recursos importantes
-
 ### Crossplane
 - `helm_release.crossplane`
 - `aws_iam_role.crossplane_irsa`
+- `aws_iam_role_policy_attachment.crossplane_irsa_poweruser`
+- `aws_iam_role_policy_attachment.crossplane_irsa_iam_full_access` (opcional)
 - `kubernetes_manifest.crossplane_irsa_serviceaccount`
 - `kubernetes_manifest.crossplane_environment_config`
 
@@ -46,13 +54,14 @@ Modulo Terraform para instalar e integrar add-ons no cluster EKS.
 - `helm_release.external_secrets`
 - `aws_iam_role.external_secrets_irsa`
 - `aws_iam_policy.external_secrets_ssm_read`
+- `aws_iam_role_policy_attachment.external_secrets_irsa_ssm_read`
 
-### Demais add-ons
+### Outros add-ons
 - `helm_release.argocd`
 - `helm_release.ingress_nginx`
 - `helm_release.kyverno`
 
-## Saidas
+## Outputs
 - `crossplane_release_name`
 - `crossplane_irsa_role_arn`
 - `external_secrets_release_name`
@@ -61,8 +70,12 @@ Modulo Terraform para instalar e integrar add-ons no cluster EKS.
 - `ingress_nginx_release_name`
 - `kyverno_release_name`
 
-## Observacoes
-- Em laboratorio, a role IRSA do Crossplane pode receber `PowerUserAccess` e opcionalmente `IAMFullAccess`.
-- Em producao, substituir por politicas de menor privilegio.
-- O `EnvironmentConfig` depende do Crossplane instalado e do OIDC provider habilitado.
-- O `EnvironmentConfig` publica metadados da conta/cluster: `accountId`, `oidcProviderArn`, `oidcIssuerHostpath`, `vpcId` e `vpcCidrBlock`.
+## Notas operacionais
+- Em lab, `PowerUserAccess` + `IAMFullAccess` acelera experimentacao.
+- Em producao, substitua por politicas minimas por provider/recurso.
+- O `EnvironmentConfig` so deve ser aplicado apos CRDs/funcoes do Crossplane estarem prontas.
+
+## Troubleshooting
+- `no matches for kind EnvironmentConfig`: Crossplane/CRD ainda nao instalado.
+- Provider em `Progressing` por muito tempo: validar namespace `crossplane-system` e `DeploymentRuntimeConfig` (`aws-irsa`).
+- `InvalidIdentityToken` em app: geralmente OIDC/trust policy fora da conta alvo.

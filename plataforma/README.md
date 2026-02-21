@@ -1,18 +1,12 @@
-# Plataforma (Helm + ArgoCD + Crossplane)
+# Plataforma (ArgoCD + Crossplane + Terraform)
 
-Esta pasta contem a camada de plataforma do lab: GitOps, componentes de plataforma e bootstrap.
+Esta pasta concentra a camada de plataforma do lab: bootstrap do cluster, catalogo de produtos de infraestrutura e fluxo GitOps.
 
 ## Estrutura
 
 ```text
 plataforma/
 ├── argo/
-│   ├── application-kind.yaml
-│   ├── application-eks-core.yaml
-│   ├── application-eks-instances.yaml
-│   ├── application-eks-workloads.yaml
-│   ├── ingress-kind.yaml
-│   └── ingress-eks.yaml
 ├── bootstrap/
 ├── cluster-metadata/
 ├── crossplane/
@@ -21,59 +15,64 @@ plataforma/
 └── minio/
 ```
 
-## ArgoCD (GitOps)
+## Responsabilidade de cada diretorio
+- `argo/`: AppProject e Applications por ambiente.
+- `bootstrap/`: Terraform para EKS e add-ons base do cluster.
+- `cluster-metadata/`: Helm chart com metadados do cluster consumidos via External Secrets.
+- `crossplane/`: providers, XRDs e compositions dos produtos.
+- `helm-charts/`: chart base de app + charts de claim Crossplane.
+- `kyverno/`: politicas de validacao em modo `Audit`.
+- `minio/`: storage local para fluxo Kind.
 
+## GitOps com ArgoCD
 ### Kind
-- `platform-apps`: API + Web + MinIO.
+- Application: `platform-apps`.
+- Conteudo: API + Web + MinIO.
 
 ### EKS
-- `platform-core`:
-  - `plataforma/crossplane/base`
-  - `plataforma/crossplane/xrd`
-  - `plataforma/crossplane/compositions`
-  - `plataforma/cluster-metadata`
-  - `plataforma/kyverno`
-- `garagem-infra`:
-  - `gitops/storage-s3` (claims S3 + IRSA + RDS)
-- `garagem-app`:
-  - `gitops/app`
-  - `gitops/web`
+- `platform-core`: instala plataforma base (Crossplane + contratos + politicas).
+- `garagem-infra`: cria instancias dos produtos (claims).
+- `garagem-app`: publica os workloads da aplicacao.
 
-Essa separacao reduz acoplamento e facilita troubleshooting por camada.
+Esse desenho reduz blast radius: erro em claim nao precisa bloquear sync de app, e vice-versa.
 
-## Crossplane + claims
-- Definicoes de produto em `plataforma/crossplane`
-- Instancias em `gitops/storage-s3`
-- Secret de conexao do bucket: `api-storage-conn`
-- API usa `S3_BUCKET` vindo desse secret em EKS
+## Produtos Crossplane usados no lab
+- `S3`: bucket + hardening + secret de conexao (`api-storage-conn`).
+- `IRSA`: role/policy para service account da API.
+- `RDS`: instancia PostgreSQL + Security Group e regra de ingress criados na composition.
 
-## Kyverno
-Pasta: `plataforma/kyverno`
-
-Policies atuais (ClusterPolicy):
+## Governanca com Kyverno
+Policies atuais:
 - `disallow-latest-tag`
 - `require-resources`
 - `require-standard-labels`
 
-Configuracao:
+Configuracao atual:
 - `validationFailureAction: Audit`
 - `emitWarning: true`
 
-Comportamento esperado:
-- nao bloqueia deploy
-- warnings aparecem no `kubectl apply`, e em eventos de Deployment/ReplicaSet
+Com isso, deploy nao e bloqueado, mas warnings aparecem em eventos de `Deployment`/`ReplicaSet`.
 
-## Helm chart base
-Chart base compartilhado: `plataforma/helm-charts/app-template`
+## Operacao do dia a dia
+### Reaplicar Applications
+```bash
+make bootstrap-argo PLATFORM=eks
+```
 
-Se alterar chart base, rode:
+### Forcar refresh no Argo
+```bash
+kubectl -n argocd annotate application platform-core argocd.argoproj.io/refresh=hard --overwrite
+kubectl -n argocd annotate application garagem-infra argocd.argoproj.io/refresh=hard --overwrite
+kubectl -n argocd annotate application garagem-app argocd.argoproj.io/refresh=hard --overwrite
+```
+
+### Atualizar dependencias Helm
 ```bash
 make helm-build
 ```
 
-e commite `Chart.lock` + `charts/*.tgz` dos charts impactados.
-
-## MinIO (local)
-- Manifest: `plataforma/minio/minio.yaml`
-- Usado no fluxo Kind
-- Em EKS o storage e S3 via Crossplane
+## Troubleshooting rapido
+- `OutOfSync` em `X*` (XR/XRDS/XS3/XIRSA): geralmente recurso gerado pelo Crossplane e nao manifesto fonte; validar app correta e prune.
+- `secret ... not found`: verificar `writeConnectionSecretToRef` na composition e claim `Ready`.
+- `InvalidIdentityToken` em pod: validar OIDC provider da conta, trust policy e annotation da ServiceAccount.
+- `NoSuchBucket`: conferir `S3_BUCKET` vindo de `api-storage-conn` e status do claim S3.

@@ -1,28 +1,26 @@
 # Lab de Platform Engineering (Monorepo API + Web)
 
-Este repositorio e um laboratorio pratico de **Platform Engineering** e **DevSecOps**.
-O fluxo cobre CI, GitOps, infraestrutura em EKS e produtos de plataforma com Crossplane.
+Este repositorio e um laboratorio pratico de Platform Engineering e DevSecOps.
+O objetivo e exercitar um fluxo completo de produto de plataforma: bootstrap de cluster, produtos via Crossplane, deploy GitOps e aplicacoes consumidoras.
 
-## Contexto do lab
-- Monorepo com **API (FastAPI)** e **Web (Flask)**
-- **CI** com Ruff, Black, Pytest, Bandit, Trivy e Buildpacks
-- **CD GitOps** com ArgoCD aplicando Helm charts do proprio repositorio
-- Ambientes:
-  - **Kind** (local): apps + MinIO
-  - **EKS** (AWS): Crossplane + claims S3/IRSA + workloads
+## Objetivos do lab
+- Padronizar deploy de apps via Helm + ArgoCD.
+- Oferecer recursos de infraestrutura como produto (S3, IRSA, RDS) com Crossplane.
+- Testar portabilidade entre contas AWS sem alterar codigo da aplicacao.
+- Validar governanca com Kyverno em modo Audit.
 
-## Camadas atuais
-- **Apps**: `app/api` e `app/web`
-- **GitOps**: `plataforma/argo` + `gitops/*`
-- **Bootstrap IaC**: `plataforma/bootstrap` (Terraform)
-- **Platform API**: `plataforma/crossplane` (XRD + Composition)
-- **Policy as Code**: `plataforma/kyverno` (modo Audit com warnings)
+## Arquitetura em camadas
+- `app/`: codigo das aplicacoes (`api` FastAPI e `web` Flask).
+- `gitops/`: charts e values de deploy das apps e claims.
+- `plataforma/bootstrap/`: Terraform para EKS e add-ons do cluster.
+- `plataforma/crossplane/`: XRDs, Compositions e providers.
+- `plataforma/argo/`: Applications e AppProject do ArgoCD.
+- `plataforma/kyverno/`: politicas de validacao (warning/audit).
 
 ## Estrutura do repositorio
 
 ```text
 .
-├── .github/workflows/
 ├── app/
 │   ├── api/
 │   └── web/
@@ -38,39 +36,58 @@ O fluxo cobre CI, GitOps, infraestrutura em EKS e produtos de plataforma com Cro
 │   ├── helm-charts/
 │   ├── kyverno/
 │   └── minio/
-├── kind-config.yaml
 ├── makefile
-└── README.md
+└── kind-config.yaml
 ```
 
+## Ambientes suportados
+- `kind` (local): apps + MinIO + ArgoCD.
+- `eks` (AWS): bootstrap via Terraform, Crossplane (S3/IRSA/RDS), apps via ArgoCD.
+
 ## ArgoCD por ambiente
-- **Kind**: 1 app (`platform-apps`) com API + Web + MinIO.
-- **EKS**: 3 apps desacopladas:
-  - `platform-core` (Crossplane base/xrd/compositions + cluster metadata + kyverno)
-  - `garagem-infra` (claims S3/IRSA/RDS)
-  - `garagem-app` (API + Web)
+### Kind
+- `platform-apps`: API + Web + MinIO.
 
-## Make targets principais
-- `make all-kind`: sobe stack local completa (Kind + ingress + Argo + GitOps)
-- `make all-eks`: bootstrap EKS (Terraform), helm dependencies e bootstrap GitOps
-- `make cluster-eks`: init/apply Terraform + kubecontext
-- `make bootstrap-argo PLATFORM=kind|eks`: aplica apps do Argo para cada ambiente
-- `make helm-build`: atualiza dependencies Helm dos charts usados no GitOps
-- `make down` / `make down-eks`: teardown local / AWS
+### EKS
+- `platform-core`: Crossplane base/xrd/compositions + cluster-metadata + Kyverno.
+- `garagem-infra`: claims de infraestrutura (`S3`, `IRSA`, `RDS`).
+- `garagem-app`: workloads (`gitops/app` e `gitops/web`).
 
-## Fluxo EKS (resumo)
-1. Terraform cria/atualiza EKS (`module.eks`).
-2. Terraform instala add-ons (`module.addons`): Crossplane, External Secrets, ArgoCD, ingress-nginx, Kyverno (via flags).
-3. `bootstrap-argo PLATFORM=eks` aplica as 3 Applications.
-4. Claims Crossplane provisionam S3 + IRSA.
-5. API consome `S3_BUCKET` via secret de conexao (`api-storage-conn`).
+Separar `core`, `infra` e `app` facilita troubleshooting e reduz acoplamento de sync.
+
+## Fluxo rapido
+### Local com Kind
+```bash
+make all-kind
+```
+
+### AWS com EKS
+```bash
+make all-eks
+```
+
+## Targets principais do Make
+- `make all-kind`: setup + cluster kind + ingress + Argo + bootstrap GitOps.
+- `make all-eks`: backend terraform + apply EKS/addons + bootstrap GitOps EKS.
+- `make cluster-eks`: terraform init/apply e `aws eks update-kubeconfig`.
+- `make bootstrap-argo PLATFORM=kind|eks`: aplica Applications do Argo.
+- `make helm-build`: atualiza dependencias Helm dos charts versionados no repo.
+- `make down` / `make down-eks`: teardown local / AWS.
+
+## Sequencia EKS (resumo)
+1. Terraform cria/atualiza o cluster (`module.eks`).
+2. Terraform instala add-ons (`module.addons`): Crossplane, External Secrets, ArgoCD, ingress-nginx, Kyverno (por flags).
+3. Argo aplica `platform-core`, `garagem-infra`, `garagem-app`.
+4. Claims Crossplane provisionam recursos e secrets de conexao.
+5. API consome secrets (S3 e RDS) sem resolver nomes dinamicamente em runtime.
+
+## Boas praticas do lab
+- Mudou chart base? rode `make helm-build` e commite `Chart.lock` e `charts/*.tgz`.
+- Evite hardcode de conta/regiao em app; use secret de conexao do Crossplane.
+- Em EKS, prefira IRSA para acesso AWS (sem access key fixa no pod).
 
 ## Documentacao detalhada
 - Apps: `app/README.md`
 - Plataforma: `plataforma/README.md`
 - Bootstrap Terraform: `plataforma/bootstrap/README.md`
 - Crossplane: `plataforma/crossplane/README.md`
-
-## Observacoes
-- O chart base das apps e compartilhado em `plataforma/helm-charts/app-template`.
-- Sempre que um chart base mudar, rode `make helm-build` e commite `Chart.lock` + `charts/*.tgz`.
