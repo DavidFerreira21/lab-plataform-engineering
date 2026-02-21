@@ -63,8 +63,8 @@ def ensure_sqlite_schema():
 
 
 # Inicialização
+Base.metadata.create_all(bind=engine)
 if IS_SQLITE:
-    Base.metadata.create_all(bind=engine)
     ensure_sqlite_schema()
 
 
