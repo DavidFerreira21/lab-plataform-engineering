@@ -65,13 +65,9 @@ spec:
                 combine:
                   strategy: string
                   string:
-                    fmt: "%s-%s-%s"
+                    fmt: "api-storage-us-east-1-%s"
                   variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.region
                     - fromFieldPath: accountId
-                policy:
-                  fromFieldPath: Required
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region
@@ -112,13 +108,9 @@ spec:
                 combine:
                   strategy: string
                   string:
-                    fmt: "%s-%s-%s"
+                    fmt: "api-storage-us-east-1-%s"
                   variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.region
                     - fromFieldPath: accountId
-                policy:
-                  fromFieldPath: Required
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region
@@ -146,13 +138,9 @@ spec:
                 combine:
                   strategy: string
                   string:
-                    fmt: "%s-%s-%s"
+                    fmt: "api-storage-us-east-1-%s"
                   variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.region
                     - fromFieldPath: accountId
-                policy:
-                  fromFieldPath: Required
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region
@@ -179,13 +167,9 @@ spec:
                 combine:
                   strategy: string
                   string:
-                    fmt: "%s-%s-%s"
+                    fmt: "api-storage-us-east-1-%s"
                   variables:
-                    - fromFieldPath: spec.parameters.name
-                    - fromFieldPath: spec.parameters.region
                     - fromFieldPath: accountId
-                policy:
-                  fromFieldPath: Required
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region
