@@ -33,9 +33,9 @@ plataforma/
   - `plataforma/crossplane/compositions`
   - `plataforma/cluster-metadata`
   - `plataforma/kyverno`
-- `platform-instances`:
-  - `gitops/storage-s3` (claims S3 + IRSA)
-- `platform-workloads`:
+- `garagem-infra`:
+  - `gitops/storage-s3` (claims S3 + IRSA + RDS)
+- `garagem-app`:
   - `gitops/app`
   - `gitops/web`
 

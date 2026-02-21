@@ -11,3 +11,6 @@ dependencies:
   - name: crossplane-irsa-claim
     version: "0.1.0"
     repository: "file://../../plataforma/helm-charts/crossplane-irsa-claim"
+  - name: crossplane-rds-claim
+    version: "0.1.0"
+    repository: "file://../../plataforma/helm-charts/crossplane-rds-claim"

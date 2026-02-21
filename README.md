@@ -47,8 +47,8 @@ O fluxo cobre CI, GitOps, infraestrutura em EKS e produtos de plataforma com Cro
 - **Kind**: 1 app (`platform-apps`) com API + Web + MinIO.
 - **EKS**: 3 apps desacopladas:
   - `platform-core` (Crossplane base/xrd/compositions + cluster metadata + kyverno)
-  - `platform-instances` (claims S3/IRSA)
-  - `platform-workloads` (API + Web)
+  - `garagem-infra` (claims S3/IRSA/RDS)
+  - `garagem-app` (API + Web)
 
 ## Make targets principais
 - `make all-kind`: sobe stack local completa (Kind + ingress + Argo + GitOps)

@@ -166,6 +166,8 @@ bootstrap-argo: ## Conecta o Argo ao Monorepo
 	@kubectl apply -f plataforma/argo/project-platform.yaml
 	@if [ "$(PLATFORM)" = "eks" ]; then \
 		kubectl -n $(NAMESPACE_ARGO) delete application platform-apps --ignore-not-found; \
+		kubectl -n $(NAMESPACE_ARGO) delete application platform-instances --ignore-not-found; \
+		kubectl -n $(NAMESPACE_ARGO) delete application platform-workloads --ignore-not-found; \
 		kubectl apply -f plataforma/argo/application-eks-core.yaml; \
 		kubectl apply -f plataforma/argo/application-eks-instances.yaml; \
 		kubectl apply -f plataforma/argo/application-eks-workloads.yaml; \

@@ -32,3 +32,26 @@ crossplane-irsa-claim:
     tags:
       owner: api
       environment: eks
+
+crossplane-rds-claim:
+  claim:
+    name: api-garagem-db
+    namespace: app
+    connectionSecretName: api-garagem-db-conn
+    passwordSecretName: api-garagem-db-auth
+    passwordSecretKey: password
+    password: "TroqueEssaSenhaNoLab123!"
+    region: us-east-1
+    engine: postgres
+    engineVersion: "16"
+    instanceClass: db.t3.micro
+    allocatedStorage: 20
+    dbName: garagem
+    username: appuser
+    publiclyAccessible: false
+    skipFinalSnapshot: true
+    deletionPolicy: Orphan
+    providerConfigRefName: default
+    tags:
+      owner: api
+      environment: eks
