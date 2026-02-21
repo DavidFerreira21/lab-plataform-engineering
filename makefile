@@ -38,7 +38,6 @@ all-eks:
 	@$(MAKE) tf-backend-bootstrap
 	@$(MAKE) cluster-eks
 	@$(MAKE) helm-build
-	@$(MAKE) install-nginx-eks
 	@$(MAKE) install-argo PLATFORM=eks
 	@$(MAKE) bootstrap-argo PLATFORM=eks
 	@$(MAKE) show-hosts PLATFORM=eks
@@ -55,7 +54,7 @@ tf-eks-apply: ## Executa terraform apply em plataforma/bootstrap
 	@echo "🚀 Terraform apply (fase 1: EKS) em $(TF_BOOTSTRAP_DIR)..."
 	@cd $(TF_BOOTSTRAP_DIR) && terraform apply -auto-approve -target=module.eks
 	@echo "🚀 Terraform apply (fase 2: instalação do Crossplane/CRDs) em $(TF_BOOTSTRAP_DIR)..."
-	@cd $(TF_BOOTSTRAP_DIR) && terraform apply -auto-approve -target=helm_release.crossplane
+	@cd $(TF_BOOTSTRAP_DIR) && terraform apply -auto-approve -target=module.addons
 	@echo "🚀 Terraform apply (fase 3: recursos dependentes do cluster) em $(TF_BOOTSTRAP_DIR)..."
 	@cd $(TF_BOOTSTRAP_DIR) && terraform apply -auto-approve
 
