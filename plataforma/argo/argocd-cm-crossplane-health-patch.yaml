@@ -5,6 +5,7 @@ data:
       kinds:
       - XS3
       - XIRSA
+      - XRDS
       clusters:
       - "*"
     - apiGroups:
@@ -15,6 +16,12 @@ data:
       - "*"
     - apiGroups:
       - iam.aws.upbound.io
+      kinds:
+      - "*"
+      clusters:
+      - "*"
+    - apiGroups:
+      - rds.aws.upbound.io
       kinds:
       - "*"
       clusters:
