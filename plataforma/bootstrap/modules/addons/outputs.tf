@@ -27,3 +27,8 @@ output "ingress_nginx_release_name" {
   value       = var.enable_ingress_nginx ? helm_release.ingress_nginx[0].name : null
   description = "Helm release name for ingress-nginx"
 }
+
+output "kyverno_release_name" {
+  value       = var.enable_kyverno ? helm_release.kyverno[0].name : null
+  description = "Helm release name for Kyverno"
+}

@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-workloads
+  namespace: argocd
+spec:
+  project: platform
+  sources:
+    - repoURL: "https://github.com/DavidFerreira21/lab-plataform-engineering.git"
+      targetRevision: HEAD
+      path: gitops/app
+      helm:
+        releaseName: platform-api
+        valueFiles:
+          - values-eks.yaml
+    - repoURL: "https://github.com/DavidFerreira21/lab-plataform-engineering.git"
+      targetRevision: HEAD
+      path: gitops/web
+      helm:
+        releaseName: platform-web
+        valueFiles:
+          - values.yaml
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

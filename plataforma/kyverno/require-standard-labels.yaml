@@ -1,0 +1,32 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-standard-labels
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "5"
+    policies.kyverno.io/title: Require standard labels
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Deployment
+spec:
+  validationFailureAction: Audit
+  emitWarning: true
+  background: true
+  rules:
+    - name: check-standard-labels
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+              namespaces:
+                - app
+      validate:
+        message: "Deployments must define labels app, environment, and owner."
+        pattern:
+          metadata:
+            labels:
+              app: "?*"
+              environment: "?*"
+              owner: "?*"

@@ -85,3 +85,8 @@ output "ingress_nginx_release_name" {
   value       = module.addons.ingress_nginx_release_name
   description = "Helm release name for ingress-nginx (when enabled via Terraform)"
 }
+
+output "kyverno_release_name" {
+  value       = module.addons.kyverno_release_name
+  description = "Helm release name for Kyverno (when enabled via Terraform)"
+}

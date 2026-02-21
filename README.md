@@ -134,7 +134,7 @@ flowchart LR
 ## Decisões de monorepo (e trade-offs)
 - **Pipelines por pasta**: API e Web têm workflows separados, mas vivem no mesmo repositório; isso simplifica o laboratório, porém em produção pode virar múltiplos repositórios para isolar ciclos de release.
 - **Charts com dependência local**: usamos `file://` e vendorizamos `charts/*.tgz` no repo para facilitar o GitOps; em produção preferimos publicar o chart base em um repositório Helm.
-- **ArgoCD com `sources` múltiplos**: uma única Application gerencia API e Web; em produção pode ser interessante separar Applications por serviço.
+- **ArgoCD por camadas no EKS**: `platform-core`, `platform-instances` e `platform-workloads`; isso reduz acoplamento entre Crossplane e deploy de apps.
 
 ## Como rodar localmente (atalho)
 - Plataforma/cluster: `make all-kind` (ver detalhes em `plataforma/README.md`)

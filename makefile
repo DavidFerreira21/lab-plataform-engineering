@@ -8,15 +8,11 @@ BIN_DIR=/usr/local/bin
 AWS_REGION:=us-east-1
 TF_STATE_BUCKET?=tfstate-terraform-lab-plataform-engineering-1
 TF_BOOTSTRAP_DIR?=plataforma/bootstrap
-KARPENTER_NAMESPACE?=karpenter
-KARPENTER_VERSION?=1.8.6
-KARPENTER_CONTROLLER_ROLE_NAME?=
-KARPENTER_CONTROLLER_ROLE_ARN?=
 PLATFORM?=kind
 EKS_CLUSTER_NAME?=eks-dev
 EKS_NODEGROUP_NAME?=tools
 	
-.PHONY: all-kind all-eks setup cluster-kind cluster-eks install-nginx-kind install-nginx-eks install-argo bootstrap-argo down down-eks help aws-configure tf-backend-bootstrap tf-eks-init tf-eks-apply eks-configure-context show-hosts helm-build set-eks-account-id
+.PHONY: all-kind all-eks setup cluster-kind cluster-eks install-nginx-kind install-argo bootstrap-argo down down-eks help tf-backend-bootstrap tf-eks-init tf-eks-apply eks-configure-context show-hosts helm-build
 
 # ==========================================
 # COMANDO PRINCIPAL
@@ -107,9 +103,6 @@ setup: ## Verifica e instala Docker, Kubectl, Kind e Helm
 # ==========================================
 # AWS (BOOTSTRAP DO BACKEND)
 # ==========================================
-aws-configure: ## Configura credenciais AWS (aws configure)
-	@aws configure
-
 tf-backend-bootstrap: ## Cria bucket S3 do state (se nao existir) e aplica configuracoes
 	@if ! command -v aws >/dev/null 2>&1; then echo "❌ AWS CLI não encontrado"; exit 1; fi
 	@AWS_REGION=$(AWS_REGION); \
@@ -153,23 +146,13 @@ install-nginx-kind: ## Instala e configura o Nginx Ingress para Kind
 	@echo "⏳ Aguardando Nginx ficar pronto (isso pode levar uns minutos)..."
 	@kubectl wait --namespace ingress-nginx --for=condition=Ready pod --selector=app.kubernetes.io/component=controller --timeout=180s
 
-install-nginx-eks: ## Instala Nginx Ingress no EKS (provider AWS)
-	@echo "🌐 Instalando Nginx Ingress Controller no EKS..."
-	@kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/aws/deploy.yaml
-	@echo "⏳ Aguardando Nginx ficar pronto (isso pode levar uns minutos)..."
-	@kubectl wait --namespace ingress-nginx --for=condition=Ready pod --selector=app.kubernetes.io/component=controller --timeout=180s
-
 # ==========================================
 # GITOPS (ARGO CD)
 # ==========================================
 install-argo: ## Instalação do ArgoCD
 	@echo "🐙 Instalando ArgoCD..."
 	@kubectl create namespace $(NAMESPACE_ARGO) || true
-	@if [ "$(PLATFORM)" = "eks" ]; then \
-		kubectl apply --server-side -n $(NAMESPACE_ARGO) -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml; \
-	else \
-		kubectl apply --server-side -n $(NAMESPACE_ARGO) -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml; \
-	fi
+	@kubectl apply --server-side -n $(NAMESPACE_ARGO) -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 	@echo "⏳ Aguardando ArgoCD..."
 	@kubectl -n $(NAMESPACE_ARGO) rollout status deploy/argocd-server --timeout=300s || true
 	@kubectl -n $(NAMESPACE_ARGO) rollout status deploy/argocd-repo-server --timeout=300s || true
@@ -182,7 +165,10 @@ bootstrap-argo: ## Conecta o Argo ao Monorepo
 	@kubectl -n $(NAMESPACE_ARGO) rollout status statefulset argocd-application-controller --timeout=300s || true
 	@kubectl apply -f plataforma/argo/project-platform.yaml
 	@if [ "$(PLATFORM)" = "eks" ]; then \
-		kubectl apply -f plataforma/argo/application-eks.yaml; \
+		kubectl -n $(NAMESPACE_ARGO) delete application platform-apps --ignore-not-found; \
+		kubectl apply -f plataforma/argo/application-eks-core.yaml; \
+		kubectl apply -f plataforma/argo/application-eks-instances.yaml; \
+		kubectl apply -f plataforma/argo/application-eks-workloads.yaml; \
 		kubectl apply -f plataforma/argo/ingress-eks.yaml; \
 	else \
 		kubectl apply -f plataforma/argo/application-kind.yaml; \
@@ -248,10 +234,3 @@ helm-build: ## Atualiza dependências Helm (apps + claims Crossplane)
 	@helm dependency build gitops/storage-s3
 	@helm dependency build plataforma/cluster-metadata
 	@echo "✅ Dependências atualizadas."
-
-set-eks-account-id: ## Atualiza account ID no values EKS da app (role ARN IRSA)
-	@if ! command -v aws >/dev/null 2>&1; then echo "❌ AWS CLI não encontrado"; exit 1; fi
-	@ACCOUNT_ID=$$(aws sts get-caller-identity --query Account --output text); \
-	if [ -z "$$ACCOUNT_ID" ]; then echo "❌ Não foi possível obter account ID"; exit 1; fi; \
-	sed -i -E "s#(eks.amazonaws.com/role-arn: \"arn:aws:iam::)[0-9]{12}(:role/api-storage-irsa\")#\1$$ACCOUNT_ID\2#g" gitops/app/values-eks.yaml; \
-	echo "✅ account ID atualizado em gitops/app/values-eks.yaml -> $$ACCOUNT_ID"

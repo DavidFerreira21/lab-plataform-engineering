@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-instances
+  namespace: argocd
+spec:
+  project: platform
+  sources:
+    - repoURL: "https://github.com/DavidFerreira21/lab-plataform-engineering.git"
+      targetRevision: HEAD
+      path: gitops/storage-s3
+      helm:
+        releaseName: platform-storage-s3
+        valueFiles:
+          - values.yaml
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

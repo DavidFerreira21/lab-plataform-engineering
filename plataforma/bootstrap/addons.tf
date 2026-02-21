@@ -40,5 +40,9 @@ module "addons" {
   ingress_nginx_namespace     = var.ingress_nginx_namespace
   ingress_nginx_chart_version = var.ingress_nginx_chart_version
 
+  enable_kyverno        = var.enable_kyverno
+  kyverno_namespace     = var.kyverno_namespace
+  kyverno_chart_version = var.kyverno_chart_version
+
   depends_on = [module.eks]
 }

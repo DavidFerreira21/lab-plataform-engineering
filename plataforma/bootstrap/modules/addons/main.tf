@@ -187,3 +187,21 @@ resource "helm_release" "ingress_nginx" {
     })
   ]
 }
+
+##############################################
+# Add-on: Kyverno
+##############################################
+
+resource "helm_release" "kyverno" {
+  count = var.enable_kyverno ? 1 : 0
+
+  name             = "kyverno"
+  repository       = "https://kyverno.github.io/kyverno/"
+  chart            = "kyverno"
+  namespace        = var.kyverno_namespace
+  create_namespace = true
+  version          = var.kyverno_chart_version
+  atomic           = true
+  cleanup_on_fail  = true
+  timeout          = 600
+}

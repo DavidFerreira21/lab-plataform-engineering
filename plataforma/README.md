@@ -8,7 +8,9 @@ Esta pasta contém a camada de plataforma do lab: **GitOps com ArgoCD**, **chart
 plataforma/
 ├── argo/
 │   ├── application-kind.yaml # Application do ambiente Kind
-│   ├── application-eks.yaml  # Application do ambiente EKS
+│   ├── application-eks-core.yaml      # Crossplane core + metadata
+│   ├── application-eks-instances.yaml # Claims de infra por app
+│   ├── application-eks-workloads.yaml # Workloads (API + Web)
 │   ├── ingress-kind.yaml     # Ingress do ArgoCD (Kind)
 │   └── ingress-eks.yaml      # Ingress do ArgoCD (EKS)
 ├── bootstrap/                # Terraform bootstrap (raiz + módulos)
@@ -28,7 +30,9 @@ plataforma/
 ### Application
 Arquivos:
 - `plataforma/argo/application-kind.yaml` (API + Web + MinIO)
-- `plataforma/argo/application-eks.yaml` (API + Web + Crossplane/S3 + IRSA)
+- `plataforma/argo/application-eks-core.yaml` (Crossplane core + metadata)
+- `plataforma/argo/application-eks-instances.yaml` (claims S3 + IRSA)
+- `plataforma/argo/application-eks-workloads.yaml` (API + Web)
 - Cada source possui `helm.releaseName` para evitar conflito de recursos
   - `platform-api` → recursos da API
   - `platform-web` → recursos da Web

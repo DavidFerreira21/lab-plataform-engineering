@@ -27,7 +27,7 @@ plataforma/bootstrap/
 ## Modulos
 - `modules/eks`: provisiona um cluster EKS com Node Group e roles IAM. A VPC default eh selecionada na raiz, mas o modulo aceita qualquer VPC.
 - `modules/addons`: instala add-ons do cluster (Crossplane, External Secrets e, opcionalmente, Argo CD) com flags de enable.
-  - Tambem suporta instalacao opcional do `ingress-nginx` via Helm.
+  - Tambem suporta instalacao opcional do `ingress-nginx` e `kyverno` via Helm.
 
 ## Uso rapido
 
@@ -71,6 +71,7 @@ terraform apply
 - `enable_external_secrets_irsa` / `external_secrets_irsa_service_account` / `external_secrets_irsa_role_name` (IRSA do External Secrets para leitura de SSM)
 - `enable_argocd` / `argocd_namespace` / `argocd_chart_version` (instalacao opcional do Argo CD via Helm)
 - `enable_ingress_nginx` / `ingress_nginx_namespace` / `ingress_nginx_chart_version` (instalacao opcional do ingress-nginx via Helm)
+- `enable_kyverno` / `kyverno_namespace` / `kyverno_chart_version` (instalacao opcional do Kyverno via Helm)
 - `enable_cluster_metadata_ssm` / `cluster_metadata_ssm_prefix` (grava metadados do cluster no SSM para automacoes futuras de IRSA)
 - `node_instance_types` (default: `t3.medium`)
 - `node_min_size`, `node_max_size`, `node_desired_size`

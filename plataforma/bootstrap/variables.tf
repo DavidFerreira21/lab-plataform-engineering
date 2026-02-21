@@ -397,6 +397,24 @@ variable "ingress_nginx_chart_version" {
   default     = "4.12.0"
 }
 
+variable "enable_kyverno" {
+  type        = bool
+  description = "Install Kyverno via Helm in the EKS cluster"
+  default     = false
+}
+
+variable "kyverno_namespace" {
+  type        = string
+  description = "Namespace for Kyverno Helm release"
+  default     = "kyverno"
+}
+
+variable "kyverno_chart_version" {
+  type        = string
+  description = "Pinned Helm chart version for Kyverno"
+  default     = "3.3.4"
+}
+
 ##############################################
 # SSM Parameter Store (metadados do cluster)
 ##############################################
