@@ -25,6 +25,7 @@ Modulo Terraform para instalar e integrar add-ons no cluster EKS.
 - `cluster_name`
 - `cluster_oidc_issuer`
 - `oidc_provider_arn`
+- `cluster_vpc_id`
 - `enable_eks_oidc_provider`
 - flags:
   - `enable_crossplane`
@@ -64,3 +65,4 @@ Modulo Terraform para instalar e integrar add-ons no cluster EKS.
 - Em laboratorio, a role IRSA do Crossplane pode receber `PowerUserAccess` e opcionalmente `IAMFullAccess`.
 - Em producao, substituir por politicas de menor privilegio.
 - O `EnvironmentConfig` depende do Crossplane instalado e do OIDC provider habilitado.
+- O `EnvironmentConfig` publica metadados da conta/cluster: `accountId`, `oidcProviderArn`, `oidcIssuerHostpath`, `vpcId` e `vpcCidrBlock`.
