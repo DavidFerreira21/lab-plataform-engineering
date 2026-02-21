@@ -7,6 +7,8 @@ metadata:
     argocd.argoproj.io/sync-wave: "3"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
+  writeConnectionSecretToRef:
+    name: {{ .Values.claim.connectionSecretName | default (printf "%s-conn" .Values.claim.name) | quote }}
   parameters:
     name: {{ .Values.claim.name | quote }}
     region: {{ .Values.claim.region | quote }}

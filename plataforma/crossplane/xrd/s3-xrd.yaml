@@ -9,6 +9,9 @@ metadata:
 spec:
   # Grupo e tipos publicados pela API customizada.
   group: platform.lab
+  connectionSecretKeys:
+    - bucketName
+    - bucketArn
   names:
     kind: XS3
     plural: xs3s

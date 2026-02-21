@@ -2,6 +2,7 @@ crossplane-s3-claim:
   claim:
     name: api-storage
     namespace: app
+    connectionSecretName: api-storage-conn
     region: us-east-1
     deletionPolicy: Orphan
     providerConfigRefName: default

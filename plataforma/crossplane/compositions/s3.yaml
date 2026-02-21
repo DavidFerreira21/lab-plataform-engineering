@@ -51,6 +51,13 @@ spec:
                   tags: {}
                 providerConfigRef:
                   name: default
+            connectionDetails:
+              - name: bucketName
+                type: FromFieldPath
+                fromFieldPath: status.atProvider.id
+              - name: bucketArn
+                type: FromFieldPath
+                fromFieldPath: status.atProvider.arn
             patches:
               # Nome externo único e estável durante o ciclo do claim.
               - type: CombineFromComposite
@@ -94,11 +101,20 @@ spec:
                   blockPublicPolicy: true
                   ignorePublicAcls: true
                   restrictPublicBuckets: true
-                  bucketSelector:
-                    matchControllerRef: true
+                  bucket: ""
                 providerConfigRef:
                   name: default
             patches:
+              - type: CombineFromComposite
+                toFieldPath: spec.forProvider.bucket
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "%s-%s-%s"
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.region
+                    - fromFieldPath: metadata.uid
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region
@@ -114,14 +130,23 @@ spec:
               spec:
                 forProvider:
                   region: us-east-1
-                  bucketSelector:
-                    matchControllerRef: true
+                  bucket: ""
                   rule:
                     - applyServerSideEncryptionByDefault:
                         sseAlgorithm: AES256
                 providerConfigRef:
                   name: default
             patches:
+              - type: CombineFromComposite
+                toFieldPath: spec.forProvider.bucket
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "%s-%s-%s"
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.region
+                    - fromFieldPath: metadata.uid
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region
@@ -137,13 +162,22 @@ spec:
               spec:
                 forProvider:
                   region: us-east-1
-                  bucketSelector:
-                    matchControllerRef: true
+                  bucket: ""
                   versioningConfiguration:
                     status: Enabled
                 providerConfigRef:
                   name: default
             patches:
+              - type: CombineFromComposite
+                toFieldPath: spec.forProvider.bucket
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "%s-%s-%s"
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+                    - fromFieldPath: spec.parameters.region
+                    - fromFieldPath: metadata.uid
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region
