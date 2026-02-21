@@ -1,100 +1,61 @@
 # Crossplane (S3 + IRSA)
 
-Este diretório contém a definição da camada de plataforma no Crossplane.
+Este diretorio define os produtos de plataforma no Crossplane.
 
-## O que existe aqui
+## Estrutura
+- `base/`: install, providers, runtime config, function, provider config
+- `xrd/`: contratos (`S3`, `IRSA`)
+- `compositions/`: implementacao AWS
 
-- `base/`: componentes base do Crossplane (namespace, providers, provider config e function).
-- `xrd/`: contratos de produto (`S3` e `IRSA`).
-- `compositions/`: implementação de cada produto em recursos AWS.
+## Ordem de sync (Argo)
+- `-2`: namespace/runtime base
+- `-1`: providers + functions
+- `0`: provider config
+- `1`: XRDs
+- `2`: compositions
+- `3/4`: claims (app `platform-instances`)
 
-## Ordem de sincronização (ArgoCD)
-
-- `-2`: namespace/runtime base (`crossplane-system`, runtime config).
-- `-1`: providers e function.
-- `0`: `ProviderConfig`.
-- `1`: XRDs (`S3`, `IRSA`).
-- `2`: Compositions.
-- `3/4`: claims de instância (via app GitOps `gitops/storage-s3`).
-
-## Providers e credenciais
-
-Arquivos em `base/`:
-
-- `install.yaml`: namespace `crossplane-system`.
-- `provider-aws-s3.yaml`: provider AWS S3.
-- `provider-aws-iam.yaml`: provider AWS IAM.
-- `provider-runtimeconfig-aws-irsa.yaml`: runtime com service account fixo `provider-aws`.
-- `provider-config.yaml`: `ProviderConfig` padrão com `credentials.source: IRSA`.
-- `function-patch-and-transform.yaml`: function para Compositions em `mode: Pipeline`.
-
-Observação:
-- A role IRSA do provider é aplicada pelo bootstrap Terraform no service account.
-
-## Produtos de plataforma
-
-### S3
-
+## Produto S3
 - XRD: `xrd/s3-xrd.yaml`
 - Composition: `compositions/s3.yaml`
-- Claim consumido por apps: `kind: S3`
 
-A composition cria:
-- `Bucket`
-- `BucketPublicAccessBlock`
-- `BucketServerSideEncryptionConfiguration`
-- `BucketVersioning`
+A composicao cria:
+- Bucket
+- BucketPublicAccessBlock
+- BucketServerSideEncryptionConfiguration
+- BucketVersioning
 
-### IRSA
+Tambem publica dados de conexao (`bucketName`, `bucketArn`) para secret.
 
+## Produto IRSA
 - XRD: `xrd/irsa-xrd.yaml`
 - Composition: `compositions/irsa.yaml`
-- Claim consumido por apps: `kind: IRSA`
 
-A composition cria:
-- `Policy`
-- `Role`
-- `RolePolicyAttachment`
+A composicao cria:
+- IAM Policy
+- IAM Role
+- IAM RolePolicyAttachment
 
-`IRSA` usa `mode: Pipeline` e lê OIDC do `EnvironmentConfig` `cluster-aws-metadata`.
+OIDC e lido dinamicamente do `EnvironmentConfig` `cluster-aws-metadata`.
 
-## Como o OIDC chega na Composition
+## Integracao com apps
+- Claims ficam em `gitops/storage-s3`
+- `S3` claim usa `connectionSecretName: api-storage-conn`
+- API (chart `gitops/app/values-eks.yaml`) le `S3_BUCKET` desse secret
 
-1. Terraform bootstrap cria `EnvironmentConfig` `cluster-aws-metadata`.
-2. `compositions/irsa.yaml` referencia esse EnvironmentConfig.
-3. A function `patch-and-transform` injeta `oidcProviderArn` e `oidcIssuerHostpath` no `assumeRolePolicyDocument`.
-4. O claim IRSA não precisa informar OIDC.
+## Convencao de bucket
+No estado atual da composicao S3, o nome externo do bucket segue:
+- `api-storage-us-east-1-<accountId>`
 
-## Instâncias (consumo)
+Isso evita fixar account id manualmente no git.
 
-As instâncias não ficam aqui. Elas ficam em:
-
-- `gitops/storage-s3`
-
-Esse app cria no mesmo release:
-- claim `S3`
-- claim `IRSA`
-
-## Troubleshooting rápido
-
-- Providers não ficam saudáveis:
-  - ver `provider.pkg.crossplane.io`
-  - checar role/annotation IRSA no service account do provider.
-
-- Claim IRSA não reconcilia:
-  - confirmar se `EnvironmentConfig/cluster-aws-metadata` existe.
-  - confirmar se a function `function-patch-and-transform` está instalada.
-
-- Claims não aplicam no Argo:
-  - validar se XRD e Composition já estão `Healthy` antes dos apps de instância.
-
-## Comandos úteis
-
-```bash
-kubectl get provider.pkg.crossplane.io
-kubectl get providerconfig.aws.upbound.io
-kubectl get xrd
-kubectl get composition
-kubectl get environmentconfig
-kubectl get s3.platform.lab,irsa.platform.lab -A
-```
+## Troubleshooting rapido
+- Provider nao sobe:
+  - `kubectl get providers.pkg.crossplane.io`
+  - `kubectl get providerrevision.pkg.crossplane.io`
+- Claim IRSA nao fica Ready:
+  - validar `EnvironmentConfig cluster-aws-metadata`
+  - validar CRDs/functions instaladas
+- Upload da API falha com `NoSuchBucket`:
+  - validar `S3_BUCKET` vindo de `api-storage-conn`
+  - validar status do claim `s3.platform.lab`

@@ -1,83 +1,64 @@
 # Apps (API + Web)
 
-Esta pasta contém a camada de aplicação do lab: **API (FastAPI)** e **Web (Flask)**. Cada serviço possui:
-- código-fonte
-- dependências (`requirements.txt`)
-- `Procfile`
-- Helm chart com values em `gitops/`
+Esta pasta contem a camada de aplicacao do lab: **API (FastAPI)** e **Web (Flask)**.
 
-## Arquitetura (Apps)
-
-```mermaid
-flowchart LR
-  User["Usuário/Browser"] --> Web["Web (Flask)"]
-  Web -->|"HTTP /carros"| API["API (FastAPI)"]
-  API --> DB["SQLite/Mongo"]
-  API --> S3["MinIO (S3 compatível)"]
-```
-
-## Serviços
+## Servicos
 
 ### API (FastAPI)
-- Endpoints:
-  - `GET /carros`
-  - `POST /carros`
-  - `DELETE /carros/{id}`
-  - `POST /carros/{id}/documento` (upload para MinIO/S3)
-  - `GET /healthz` (readiness/liveness)
-- Modelo: `marca`, `modelo`, `ano`
-- Campo adicional: `documento_key` (caminho do arquivo no storage)
-- Persistência:
-  - **SQLite** por padrão (`carros.db` local)
-  - **MongoDB** quando `USE_MONGO=true`
+Endpoints principais:
+- `GET /carros`
+- `POST /carros`
+- `DELETE /carros/{id}`
+- `POST /carros/{id}/documento`
+- `GET /healthz`
+
+Persistencia:
+- SQLite por padrao
+- MongoDB quando `USE_MONGO=true`
+
+Upload S3:
+- A API usa **diretamente** o valor de `S3_BUCKET`
+- Nao existe mais resolucao dinamica de nome de bucket dentro do codigo
+- Em EKS, `S3_BUCKET` vem do secret `api-storage-conn` (`bucketName`)
 
 ### Web (Flask)
-- Formulário para cadastro e listagem de carros
-- Consome a API via `API_URL`
-- Rotas principais:
-  - `/` (lista)
-  - `/cadastrar` (POST)
-  - `/excluir/<id>`
-  - `/healthz` (readiness/liveness)
+Rotas principais:
+- `/`
+- `/cadastrar`
+- `/excluir/<id>`
+- `/healthz`
 
-## Variáveis de ambiente
+A Web consome a API pela variavel `API_URL`.
 
-### API
-- `USE_MONGO` (padrão: `false`) ativa MongoDB
-- `MONGO_URL` (padrão em `database.py`: `mongodb://localhost:27017`)
-- `S3_ENDPOINT` (ex.: `http://minio:9000`)
-- `S3_BUCKET` (ex.: `carros`)
-- `S3_ACCESS_KEY` / `S3_SECRET_KEY`
-- `S3_REGION` (ex.: `us-east-1`)
-- `S3_USE_SSL` (`true` ou `false`)
-
-### Web
-- `API_URL` (padrão: `http://127.0.0.1:8000/carros`)
-- `FLASK_DEBUG` (padrão: `false`)
-
-## Helm values (Kubernetes)
+## Variaveis de ambiente
 
 ### API
-Arquivo: `gitops/app/values.yaml`
-- `image.repository` / `image.tag`
-- `service.port` (porta do Service)
-- `service.targetPort` (porta real do container, API roda em 8000)
-- `service.name` (nome fixo do Service)
-- `probes.*` (readiness/liveness)
-- `env` com variáveis S3/MinIO
+- `USE_MONGO`
+- `MONGO_URL`
+- `S3_ENDPOINT`
+- `S3_BUCKET`
+- `S3_ACCESS_KEY`
+- `S3_SECRET_KEY`
+- `S3_REGION`
+- `S3_USE_SSL`
 
 ### Web
-Arquivo: `gitops/web/values.yaml`
-- `image.repository` / `image.tag`
-- `service.port` (porta do Service)
-- `service.targetPort` (porta real do container, Web roda em 5000)
-- `service.name` (nome fixo do Service)
-- `ingress.enabled` / `ingress.host`
-- `ingress.annotations` (ex.: `proxy-body-size`)
-- `env.API_URL` apontando para o Service da API no cluster
-- `probes.*` (readiness/liveness)
+- `API_URL`
+- `FLASK_DEBUG`
 
-## Como rodar localmente
+## Helm values
+
+### API
+- `gitops/app/values-kind.yaml`
+  - fluxo local com MinIO
+- `gitops/app/values-eks.yaml`
+  - `S3_BUCKET` via `secretKeyRef` em `api-storage-conn.bucketName`
+  - service account com annotation IRSA
+
+### Web
+- `gitops/web/values.yaml`
+
+## Rodar localmente
 
 ### API
 ```bash
@@ -97,27 +78,20 @@ pip install -r requirements.txt
 python app.py
 ```
 
-Acesse: `http://127.0.0.1:5000`
-
 ## Testes
 
 ### API
 ```bash
 cd app/api
-pytest app/api/tests
+pytest
 ```
 
 ### Web
 ```bash
 cd app/web
-pytest app/web/tests
+pytest
 ```
 
-### Saída dos testes
-- O `pytest.ini` na raiz habilita saída verbose (`-vv -rA`).
-
-## Observações
-- A Web precisa do `API_URL` correto para funcionar dentro do cluster.
-- O nome do Service é configurado via `service.name` (ex.: `api-carro`, `web-carro`).
-- Uploads grandes podem exigir ajuste no Ingress (`proxy-body-size`).
-- Os probes usam `/healthz` para evitar dependência da API na rota `/`.
+## Observacoes
+- Upload grande pode exigir ajuste de ingress (`proxy-body-size`).
+- Em EKS, se houver erro de upload S3, validar primeiro: role IRSA, policy e valor do secret `api-storage-conn`.
