@@ -60,7 +60,7 @@ spec:
                 fromFieldPath: status.atProvider.arn
             patches:
               # Nome externo único e estável durante o ciclo do claim.
-              - type: CombineFromComposite
+              - type: CombineFromEnvironment
                 toFieldPath: metadata.annotations[crossplane.io/external-name]
                 combine:
                   strategy: string
@@ -69,7 +69,9 @@ spec:
                   variables:
                     - fromFieldPath: spec.parameters.name
                     - fromFieldPath: spec.parameters.region
-                    - fromFieldPath: metadata.uid
+                    - fromFieldPath: accountId
+                policy:
+                  fromFieldPath: Required
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region
@@ -105,7 +107,7 @@ spec:
                 providerConfigRef:
                   name: default
             patches:
-              - type: CombineFromComposite
+              - type: CombineFromEnvironment
                 toFieldPath: spec.forProvider.bucket
                 combine:
                   strategy: string
@@ -114,7 +116,9 @@ spec:
                   variables:
                     - fromFieldPath: spec.parameters.name
                     - fromFieldPath: spec.parameters.region
-                    - fromFieldPath: metadata.uid
+                    - fromFieldPath: accountId
+                policy:
+                  fromFieldPath: Required
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region
@@ -137,7 +141,7 @@ spec:
                 providerConfigRef:
                   name: default
             patches:
-              - type: CombineFromComposite
+              - type: CombineFromEnvironment
                 toFieldPath: spec.forProvider.bucket
                 combine:
                   strategy: string
@@ -146,7 +150,9 @@ spec:
                   variables:
                     - fromFieldPath: spec.parameters.name
                     - fromFieldPath: spec.parameters.region
-                    - fromFieldPath: metadata.uid
+                    - fromFieldPath: accountId
+                policy:
+                  fromFieldPath: Required
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region
@@ -168,7 +174,7 @@ spec:
                 providerConfigRef:
                   name: default
             patches:
-              - type: CombineFromComposite
+              - type: CombineFromEnvironment
                 toFieldPath: spec.forProvider.bucket
                 combine:
                   strategy: string
@@ -177,7 +183,9 @@ spec:
                   variables:
                     - fromFieldPath: spec.parameters.name
                     - fromFieldPath: spec.parameters.region
-                    - fromFieldPath: metadata.uid
+                    - fromFieldPath: accountId
+                policy:
+                  fromFieldPath: Required
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.region
                 toFieldPath: spec.forProvider.region

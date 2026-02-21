@@ -16,10 +16,7 @@ app-template:
     - name: S3_ENDPOINT
       value: "https://s3.us-east-1.amazonaws.com"
     - name: S3_BUCKET
-      valueFrom:
-        secretKeyRef:
-          name: "api-storage-conn"
-          key: "bucketName"
+      value: "api-storage-{region}-{account_id}"
     - name: S3_ACCESS_KEY
       value: ""
     - name: S3_SECRET_KEY
