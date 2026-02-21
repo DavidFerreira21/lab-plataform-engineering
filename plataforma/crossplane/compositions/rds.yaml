@@ -25,6 +25,9 @@ spec:
               kind: Instance
               spec:
                 deletionPolicy: Orphan
+                writeConnectionSecretToRef:
+                  namespace: app
+                  name: ""
                 forProvider:
                   allocatedStorage: 20
                   engine: postgres
@@ -87,6 +90,17 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.passwordSecretNamespace
                 toFieldPath: spec.forProvider.passwordSecretRef.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.passwordSecretNamespace
+                toFieldPath: spec.writeConnectionSecretToRef.namespace
+              - type: CombineFromComposite
+                toFieldPath: spec.writeConnectionSecretToRef.name
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "%s-conn"
+                  variables:
+                    - fromFieldPath: spec.parameters.name
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.publiclyAccessible
                 toFieldPath: spec.forProvider.publiclyAccessible
