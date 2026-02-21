@@ -1,9 +1,8 @@
 fastapi
 uvicorn
 sqlalchemy
+psycopg2-binary
 pysqlite3-binary
-pymongo
-motor
 python-dotenv
 flask
 requests

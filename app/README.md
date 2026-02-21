@@ -13,8 +13,8 @@ Endpoints principais:
 - `GET /healthz`
 
 Persistencia:
-- SQLite por padrao
-- MongoDB quando `USE_MONGO=true`
+- PostgreSQL (RDS) em EKS via variaveis `DB_*` ou `DATABASE_URL`
+- SQLite como fallback local
 
 Upload S3:
 - A API usa **diretamente** o valor de `S3_BUCKET`
@@ -33,8 +33,12 @@ A Web consome a API pela variavel `API_URL`.
 ## Variaveis de ambiente
 
 ### API
-- `USE_MONGO`
-- `MONGO_URL`
+- `DATABASE_URL` (opcional)
+- `DB_HOST`
+- `DB_PORT`
+- `DB_NAME`
+- `DB_USER`
+- `DB_PASSWORD`
 - `S3_ENDPOINT`
 - `S3_BUCKET`
 - `S3_ACCESS_KEY`
@@ -53,6 +57,7 @@ A Web consome a API pela variavel `API_URL`.
   - fluxo local com MinIO
 - `gitops/app/values-eks.yaml`
   - `S3_BUCKET` via `secretKeyRef` em `api-storage-conn.bucketName`
+  - `DB_*` via secrets `api-garagem-db-conn` e `api-garagem-db-auth`
   - service account com annotation IRSA
 
 ### Web

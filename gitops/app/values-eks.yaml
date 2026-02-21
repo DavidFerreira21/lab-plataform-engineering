@@ -28,6 +28,31 @@ app-template:
       value: "us-east-1"
     - name: S3_USE_SSL
       value: "true"
+    - name: DB_HOST
+      valueFrom:
+        secretKeyRef:
+          name: "api-garagem-db-conn"
+          key: "host"
+    - name: DB_PORT
+      valueFrom:
+        secretKeyRef:
+          name: "api-garagem-db-conn"
+          key: "port"
+    - name: DB_NAME
+      valueFrom:
+        secretKeyRef:
+          name: "api-garagem-db-conn"
+          key: "database"
+    - name: DB_USER
+      valueFrom:
+        secretKeyRef:
+          name: "api-garagem-db-conn"
+          key: "username"
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: "api-garagem-db-auth"
+          key: "password"
     - name: API_URL
       value: "http://api-carro-svc:80/carros"
     - name: FLASK_DEBUG

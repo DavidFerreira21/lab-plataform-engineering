@@ -5,10 +5,9 @@ import time
 import os
 
 import boto3
-from bson import ObjectId
 from fastapi import FastAPI, Request, UploadFile, File, HTTPException
 
-from database import USE_MONGO, SessionLocal, CarroSQL, collection, CarroSchema
+from database import SessionLocal, CarroSQL, CarroSchema
 
 app = FastAPI()
 
@@ -84,68 +83,45 @@ async def log_requests(request: Request, call_next):
 class CarroRepo:
     @staticmethod
     def listar():
-        if USE_MONGO:
-            # Converte o _id do Mongo para string para o JSON aceitar
-            lista = []
-            for item in collection.find():
-                item = dict(item)
-                item["_id"] = str(item["_id"])
-                item["id"] = item["_id"]
-                lista.append(item)
-            return lista
-        else:
-            db = SessionLocal()
-            itens = db.query(CarroSQL).all()
-            if itens and isinstance(itens[0], dict):
-                return itens
-            return [
-                {
-                    "id": carro.id,
-                    "marca": carro.marca,
-                    "modelo": carro.modelo,
-                    "ano": carro.ano,
-                    "documento_key": carro.documento_key,
-                }
-                for carro in itens
-            ]
+        db = SessionLocal()
+        itens = db.query(CarroSQL).all()
+        if itens and isinstance(itens[0], dict):
+            return itens
+        return [
+            {
+                "id": carro.id,
+                "marca": carro.marca,
+                "modelo": carro.modelo,
+                "ano": carro.ano,
+                "documento_key": carro.documento_key,
+            }
+            for carro in itens
+        ]
 
     @staticmethod
     def salvar(carro_dict):
-        if USE_MONGO:
-            result = collection.insert_one(carro_dict)
-            return str(result.inserted_id)
-        else:
-            db = SessionLocal()
-            novo = CarroSQL(**carro_dict)
-            db.add(novo)
-            db.commit()
-            db.refresh(novo)
-            return str(novo.id)
+        db = SessionLocal()
+        novo = CarroSQL(**carro_dict)
+        db.add(novo)
+        db.commit()
+        db.refresh(novo)
+        return str(novo.id)
 
     @staticmethod
     def deletar(carro_id):
-        if USE_MONGO:
-            collection.delete_one({"_id": ObjectId(carro_id)})
-        else:
-            db = SessionLocal()
-            carro = db.query(CarroSQL).filter(CarroSQL.id == carro_id).first()
-            if carro:
-                db.delete(carro)
-                db.commit()
+        db = SessionLocal()
+        carro = db.query(CarroSQL).filter(CarroSQL.id == carro_id).first()
+        if carro:
+            db.delete(carro)
+            db.commit()
 
     @staticmethod
     def atualizar_documento(carro_id, documento_key):
-        if USE_MONGO:
-            collection.update_one(
-                {"_id": ObjectId(carro_id)},
-                {"$set": {"documento_key": documento_key}},
-            )
-        else:
-            db = SessionLocal()
-            carro = db.query(CarroSQL).filter(CarroSQL.id == int(carro_id)).first()
-            if carro:
-                carro.documento_key = documento_key
-                db.commit()
+        db = SessionLocal()
+        carro = db.query(CarroSQL).filter(CarroSQL.id == int(carro_id)).first()
+        if carro:
+            carro.documento_key = documento_key
+            db.commit()
 
 
 @app.get("/carros")
@@ -166,7 +142,7 @@ def post_carro(carro: CarroSchema):
 
 @app.delete("/carros/{carro_id}")
 def delete_carro(carro_id: str):  # Recebe string pois o ID do Mongo é hash
-    CarroRepo.deletar(carro_id)
+    CarroRepo.deletar(int(carro_id))
     return {"status": "removido"}
 
 
