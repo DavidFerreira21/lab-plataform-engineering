@@ -46,6 +46,7 @@ def get_s3_client():
 
     return boto3.client("s3", **client_kwargs)
 
+
 def log_json(level, message, **fields):
     payload = {"level": level, "message": message, **fields}
     logger.log(level, json.dumps(payload, ensure_ascii=True))
