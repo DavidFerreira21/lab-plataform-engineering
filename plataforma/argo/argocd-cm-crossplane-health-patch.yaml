@@ -1,4 +1,25 @@
 data:
+  resource.exclusions: |
+    - apiGroups:
+      - platform.lab
+      kinds:
+      - XS3
+      - XIRSA
+      clusters:
+      - "*"
+    - apiGroups:
+      - s3.aws.upbound.io
+      kinds:
+      - "*"
+      clusters:
+      - "*"
+    - apiGroups:
+      - iam.aws.upbound.io
+      kinds:
+      - "*"
+      clusters:
+      - "*"
+
   resource.customizations.health.pkg.crossplane.io_Provider: |
     hs = {}
 
