@@ -6,7 +6,7 @@ terraform {
   required_version = ">= 1.5.0"
 
   backend "s3" {
-    bucket       = "tfstate-terraform-lab-plataform-engineering"
+    bucket       = "tfstate-terraform-lab-plataform-engineering-1"
     key          = "plataforma/bootstrap/terraform.tfstate"
     region       = "us-east-1"
     encrypt      = true

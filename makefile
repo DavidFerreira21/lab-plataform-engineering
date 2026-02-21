@@ -6,7 +6,7 @@ NAMESPACE_ARGO=argocd
 BIN_DIR=/usr/local/bin
 # Regiao fixa do lab
 AWS_REGION:=us-east-1
-TF_STATE_BUCKET?=tfstate-terraform-lab-plataform-engineering
+TF_STATE_BUCKET?=tfstate-terraform-lab-plataform-engineering-1
 TF_BOOTSTRAP_DIR?=plataforma/bootstrap
 KARPENTER_NAMESPACE?=karpenter
 KARPENTER_VERSION?=1.8.6
@@ -38,7 +38,6 @@ all-eks:
 	@$(MAKE) tf-backend-bootstrap
 	@$(MAKE) cluster-eks
 	@$(MAKE) helm-build
-	@$(MAKE) install-argo PLATFORM=eks
 	@$(MAKE) bootstrap-argo PLATFORM=eks
 	@$(MAKE) show-hosts PLATFORM=eks
 
@@ -54,7 +53,7 @@ tf-eks-apply: ## Executa terraform apply em plataforma/bootstrap
 	@echo "🚀 Terraform apply (fase 1: EKS) em $(TF_BOOTSTRAP_DIR)..."
 	@cd $(TF_BOOTSTRAP_DIR) && terraform apply -auto-approve -target=module.eks
 	@echo "🚀 Terraform apply (fase 2: instalação do Crossplane/CRDs) em $(TF_BOOTSTRAP_DIR)..."
-	@cd $(TF_BOOTSTRAP_DIR) && terraform apply -auto-approve -target=module.addons
+	@cd $(TF_BOOTSTRAP_DIR) && terraform apply -auto-approve -target=module.addons.helm_release.crossplane
 	@echo "🚀 Terraform apply (fase 3: recursos dependentes do cluster) em $(TF_BOOTSTRAP_DIR)..."
 	@cd $(TF_BOOTSTRAP_DIR) && terraform apply -auto-approve
 

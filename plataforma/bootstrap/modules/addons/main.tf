@@ -157,6 +157,7 @@ resource "helm_release" "argocd" {
   atomic           = true
   cleanup_on_fail  = true
   timeout          = 600
+  take_ownership   = true
 }
 
 ##############################################
