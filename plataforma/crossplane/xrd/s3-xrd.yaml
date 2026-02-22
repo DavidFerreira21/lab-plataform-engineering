@@ -9,6 +9,7 @@ metadata:
 spec:
   # Grupo e tipos publicados pela API customizada.
   group: platform.lab
+  writeConnectionSecretsToNamespace: app
   connectionSecretKeys:
     - bucketName
     - bucketArn
