@@ -9,6 +9,7 @@ metadata:
     argocd.argoproj.io/compare-options: IgnoreExtraneous
 spec:
   writeConnectionSecretToRef:
+    namespace: {{ .Values.claim.connectionSecretNamespace | default .Values.claim.namespace | quote }}
     name: {{ .Values.claim.connectionSecretName | default (printf "%s-conn" .Values.claim.name) | quote }}
   parameters:
     name: {{ .Values.claim.name | quote }}

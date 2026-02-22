@@ -1,6 +1,7 @@
 claim:
   name: app-storage
   namespace: app
+  connectionSecretNamespace: ""
   connectionSecretName: ""
   region: us-east-1
   deletionPolicy: Orphan
