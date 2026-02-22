@@ -2,8 +2,7 @@ app-template:
   serviceAccount:
     create: true
     name: api-carro
-    annotations:
-      eks.amazonaws.com/role-arn: "arn:aws:iam::590183676219:role/api-storage-irsa"
+    annotations: {}
   replicaCount: 1
   image:
     repository: david210/lab-api-carro
