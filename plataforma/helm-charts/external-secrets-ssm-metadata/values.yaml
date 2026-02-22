@@ -11,3 +11,10 @@ externalSecret:
   targetSecretName: cluster-aws-metadata
   metadataPrefix: /platform/bootstrap
   clusterName: eks-dev
+
+s3BucketSecret:
+  enabled: true
+  name: api-storage-conn
+  namespace: app
+  refreshInterval: 1h
+  bucketPrefix: api-storage

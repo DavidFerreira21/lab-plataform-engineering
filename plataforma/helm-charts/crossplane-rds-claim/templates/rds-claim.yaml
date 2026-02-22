@@ -10,17 +10,14 @@ stringData:
   {{ .Values.claim.passwordSecretKey }}: {{ .Values.claim.password | quote }}
 ---
 apiVersion: platform.lab/v1alpha1
-kind: RDS
+kind: XRDS
 metadata:
   name: {{ .Values.claim.name }}
-  namespace: {{ .Values.claim.namespace }}
   annotations:
     argocd.argoproj.io/sync-wave: "3"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/compare-options: IgnoreExtraneous
 spec:
-  writeConnectionSecretToRef:
-    name: {{ .Values.claim.connectionSecretName | default (printf "%s-conn" .Values.claim.name) | quote }}
   parameters:
     name: {{ .Values.claim.name | quote }}
     region: {{ .Values.claim.region | quote }}

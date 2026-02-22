@@ -6,17 +6,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
 spec:
   group: platform.lab
-  connectionSecretKeys:
-    - host
-    - port
-    - username
-    - database
   names:
     kind: XRDS
     plural: xrds
-  claimNames:
-    kind: RDS
-    plural: rdss
   versions:
     - name: v1alpha1
       served: true

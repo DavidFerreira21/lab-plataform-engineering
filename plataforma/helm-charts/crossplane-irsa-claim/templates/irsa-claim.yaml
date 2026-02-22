@@ -3,10 +3,9 @@
 {{- $objectArn := printf "arn:aws:s3:::%s/*" $bucketName -}}
 {{- $generatedPolicy := dict "Version" "2012-10-17" "Statement" (list (dict "Effect" "Allow" "Action" .Values.claim.bucketActions "Resource" (list $bucketArn)) (dict "Effect" "Allow" "Action" .Values.claim.objectActions "Resource" (list $objectArn))) -}}
 apiVersion: platform.lab/v1alpha1
-kind: IRSA
+kind: XIRSA
 metadata:
   name: {{ .Values.claim.name }}
-  namespace: {{ .Values.claim.namespace }}
   annotations:
     argocd.argoproj.io/sync-wave: "4"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

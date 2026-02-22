@@ -8,9 +8,9 @@ Este diretorio define contratos e implementacoes dos produtos de infraestrutura 
 - `compositions/`: implementacao AWS de cada produto.
 
 ## Produtos disponiveis
-- S3 (`S3` / `XS3`)
-- IRSA (`IRSA` / `XIRSA`)
-- RDS (`RDS` / `XRDS`)
+- S3 (`XS3`)
+- IRSA (`XIRSA`)
+- RDS (`XRDS`)
 
 ## Ordem de sync no Argo (`platform-core`)
 - `-2`: namespace/base runtime
@@ -75,10 +75,13 @@ Conexao publicada:
 - `database`
 
 ## Integracao com workloads
-Claims sao aplicadas em `gitops/storage-s3` (app `garagem-infra`):
-- `S3` claim -> secret `api-storage-conn`
-- `IRSA` claim -> annotation da service account consumidora
-- `RDS` claim -> secret `api-garagem-db-conn`
+XRs sao aplicados em `gitops/storage-s3` (app `garagem-infra`):
+- `XS3` -> bucket S3
+- `XIRSA` -> role/policy para service account
+- `XRDS` -> banco e secret de conexao (`api-garagem-db-conn`)
+
+No Crossplane v2, secret de conexao de XR/claim nao e suportado.
+Por isso o `api-storage-conn` e gerado via `ExternalSecret` no app `platform-core`, usando `accountId` do SSM.
 
 A API em `gitops/app/values-eks.yaml` consome esses secrets por `valueFrom.secretKeyRef`.
 

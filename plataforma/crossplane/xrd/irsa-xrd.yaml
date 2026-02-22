@@ -13,10 +13,6 @@ spec:
   names:
     kind: XIRSA
     plural: xirsas
-  # Claim names: o que os times de app usam.
-  claimNames:
-    kind: IRSA
-    plural: irsas
   versions:
     - name: v1alpha1
       served: true

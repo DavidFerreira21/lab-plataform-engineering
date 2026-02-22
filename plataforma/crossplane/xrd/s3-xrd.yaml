@@ -9,17 +9,9 @@ metadata:
 spec:
   # Grupo e tipos publicados pela API customizada.
   group: platform.lab
-  writeConnectionSecretsToNamespace: app
-  connectionSecretKeys:
-    - bucketName
-    - bucketArn
   names:
     kind: XS3
     plural: xs3s
-  # Claim names: o que os times de app usam.
-  claimNames:
-    kind: S3
-    plural: s3s
   versions:
     - name: v1alpha1
       served: true

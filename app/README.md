@@ -58,7 +58,7 @@ A Web chama a API pela variavel `API_URL`.
 
 ### EKS
 - Values API: `gitops/app/values-eks.yaml`
-- `S3_BUCKET` vem de `api-storage-conn.bucketName`
+- `S3_BUCKET` vem de `api-storage-conn.bucketName` (secret gerado por External Secrets)
 - `DB_HOST`/`DB_PORT`/`DB_USER` via `api-garagem-db-conn`
 - `DB_PASSWORD` via `api-garagem-db-auth`
 - ServiceAccount da API recebe annotation IRSA
