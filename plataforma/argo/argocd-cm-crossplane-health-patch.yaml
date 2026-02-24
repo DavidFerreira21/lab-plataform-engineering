@@ -34,6 +34,32 @@ data:
   resource.customizations.health.pkg.crossplane.io_Provider: |
     hs = {}
 
+    local function isTransient(condition)
+      if condition == nil or condition.message == nil then
+        return false
+      end
+
+      local msg = string.lower(condition.message)
+
+      if string.find(msg, "package revision health is \"unknown\"", 1, true) ~= nil then
+        return true
+      end
+
+      if string.find(msg, "deployment does not have minimum availability", 1, true) ~= nil then
+        return true
+      end
+
+      if string.find(msg, "waiting for package runtime controller", 1, true) ~= nil then
+        return true
+      end
+
+      if string.find(msg, "cannot resolve package dependencies", 1, true) ~= nil then
+        return true
+      end
+
+      return false
+    end
+
     if obj.status == nil or obj.status.conditions == nil then
       hs.status = "Progressing"
       hs.message = "Waiting for Provider status"
@@ -59,12 +85,24 @@ data:
     end
 
     if installed ~= nil and installed.status == "False" then
+      if isTransient(installed) then
+        hs.status = "Progressing"
+        hs.message = installed.message or "Provider is still converging"
+        return hs
+      end
+
       hs.status = "Degraded"
       hs.message = installed.message or "Provider installation failed"
       return hs
     end
 
     if healthy ~= nil and healthy.status == "False" then
+      if isTransient(healthy) then
+        hs.status = "Progressing"
+        hs.message = healthy.message or "Provider is still converging"
+        return hs
+      end
+
       hs.status = "Degraded"
       hs.message = healthy.message or "Provider is unhealthy"
       return hs
