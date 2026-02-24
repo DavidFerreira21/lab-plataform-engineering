@@ -20,7 +20,7 @@ Este diretorio define contratos e implementacoes dos produtos de infraestrutura 
 ## Base instalada (`base/`)
 - Functions:
   - `function-environment-configs`
-  - `function-patch-and-transform`
+  - `function-go-templating`
 - Providers AWS:
   - `provider-aws-s3`
   - `provider-aws-iam`
@@ -54,6 +54,10 @@ Segredos esperados no namespace da app:
 - `api-garagem-db-auth` (password sincronizado do AWS Secrets Manager)
 
 A API em `gitops/app/values-eks.yaml` consome esses secrets por `valueFrom.secretKeyRef`.
+
+Flags no contrato (avaliadas dentro da composition via go-templating):
+- `enableS3`
+- `enableDatabase`
 
 ## Padroes adotados no lab
 - Nome de bucket S3 deterministico por conta (evita colisao entre contas).

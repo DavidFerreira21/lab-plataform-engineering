@@ -13,7 +13,6 @@ spec:
     kind: XPythonAppInfra
   mode: Pipeline
   pipeline:
-    # Carrega metadados dinâmicos da conta/cluster (accountId, OIDC, VPC, etc.)
     - step: environment-configs
       functionRef:
         name: function-environment-configs
@@ -26,604 +25,308 @@ spec:
               ref:
                 name: cluster-aws-metadata
 
-    # Cria e conecta todos os recursos AWS/Kubernetes a partir dos parâmetros do XR
-    - step: patch-and-transform
+    - step: render-resources
       functionRef:
-        name: function-patch-and-transform
+        name: function-go-templating
       input:
-        apiVersion: pt.fn.crossplane.io/v1beta1
-        kind: Resources
-        resources:
-          # Bucket principal da aplicação (nome determinístico por conta/região)
-          - name: s3-bucket
-            base:
-              apiVersion: s3.aws.upbound.io/v1beta2
-              kind: Bucket
-              metadata:
-                annotations:
-                  crossplane.io/external-name: ""
-              spec:
-                deletionPolicy: Orphan
-                forProvider:
-                  region: us-east-1
-                  tags: {}
-                providerConfigRef:
-                  name: default
-            patches:
-              - type: CombineFromEnvironment
-                toFieldPath: metadata.annotations[crossplane.io/external-name]
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "api-storage-%s-%s"
-                  variables:
-                    - fromFieldPath: region
-                    - fromFieldPath: accountId
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.region
-                toFieldPath: spec.forProvider.region
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.deletionPolicy
-                toFieldPath: spec.deletionPolicy
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.tags
-                toFieldPath: spec.forProvider.tags
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.providerConfigRefName
-                toFieldPath: spec.providerConfigRef.name
-              - type: ToCompositeFieldPath
-                fromFieldPath: status.atProvider.id
-                toFieldPath: status.bucketName
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- $xr := getCompositeResource . -}}
+            {{- $p := $xr.spec.parameters -}}
+            {{- $env := index .context "apiextensions.crossplane.io/environment" -}}
+            {{- $region := $p.region -}}
+            {{- $accountId := index $env "accountId" -}}
+            {{- $oidcProviderArn := index $env "oidcProviderArn" -}}
+            {{- $oidcIssuerHostpath := index $env "oidcIssuerHostpath" -}}
+            {{- $vpcId := index $env "vpcId" -}}
+            {{- $vpcCidrBlock := index $env "vpcCidrBlock" -}}
+            {{- $bucketName := printf "api-storage-%s-%s" $region $accountId -}}
 
-          # Hardening do bucket: bloqueio de acesso público
-          - name: s3-public-access-block
-            base:
-              apiVersion: s3.aws.upbound.io/v1beta1
-              kind: BucketPublicAccessBlock
-              spec:
-                deletionPolicy: Orphan
-                forProvider:
-                  region: us-east-1
-                  blockPublicAcls: true
-                  blockPublicPolicy: true
-                  ignorePublicAcls: true
-                  restrictPublicBuckets: true
-                  bucket: ""
-                providerConfigRef:
-                  name: default
-            patches:
-              - type: CombineFromEnvironment
-                toFieldPath: spec.forProvider.bucket
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "api-storage-%s-%s"
-                  variables:
-                    - fromFieldPath: region
-                    - fromFieldPath: accountId
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.region
-                toFieldPath: spec.forProvider.region
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.deletionPolicy
-                toFieldPath: spec.deletionPolicy
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.providerConfigRefName
-                toFieldPath: spec.providerConfigRef.name
+            {{- $enableS3 := true -}}
+            {{- if hasKey $p "enableS3" -}}
+            {{- $enableS3 = $p.enableS3 -}}
+            {{- end -}}
+            {{- $enableDB := true -}}
+            {{- if hasKey $p "enableDatabase" -}}
+            {{- $enableDB = $p.enableDatabase -}}
+            {{- end -}}
 
-          # Hardening do bucket: criptografia server-side
-          - name: s3-encryption
-            base:
-              apiVersion: s3.aws.upbound.io/v1beta2
-              kind: BucketServerSideEncryptionConfiguration
-              spec:
-                deletionPolicy: Orphan
-                forProvider:
-                  region: us-east-1
-                  bucket: ""
-                  rule:
-                    - applyServerSideEncryptionByDefault:
-                        sseAlgorithm: AES256
-                providerConfigRef:
-                  name: default
-            patches:
-              - type: CombineFromEnvironment
-                toFieldPath: spec.forProvider.bucket
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "api-storage-%s-%s"
-                  variables:
-                    - fromFieldPath: region
-                    - fromFieldPath: accountId
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.region
-                toFieldPath: spec.forProvider.region
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.deletionPolicy
-                toFieldPath: spec.deletionPolicy
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.providerConfigRefName
-                toFieldPath: spec.providerConfigRef.name
+            {{- if $enableS3 }}
+            ---
+            apiVersion: s3.aws.upbound.io/v1beta2
+            kind: Bucket
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: s3-bucket
+                crossplane.io/external-name: {{ $bucketName }}
+            spec:
+              deletionPolicy: {{ $p.deletionPolicy }}
+              forProvider:
+                region: {{ $region }}
+                tags:
+            {{ toYaml $p.tags | indent 6 }}
+              providerConfigRef:
+                name: {{ $p.providerConfigRefName }}
 
-          # Hardening do bucket: versionamento habilitado
-          - name: s3-versioning
-            base:
-              apiVersion: s3.aws.upbound.io/v1beta2
-              kind: BucketVersioning
-              spec:
-                deletionPolicy: Orphan
-                forProvider:
-                  region: us-east-1
-                  bucket: ""
-                  versioningConfiguration:
-                    status: Enabled
-                providerConfigRef:
-                  name: default
-            patches:
-              - type: CombineFromEnvironment
-                toFieldPath: spec.forProvider.bucket
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "api-storage-%s-%s"
-                  variables:
-                    - fromFieldPath: region
-                    - fromFieldPath: accountId
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.region
-                toFieldPath: spec.forProvider.region
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.deletionPolicy
-                toFieldPath: spec.deletionPolicy
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.providerConfigRefName
-                toFieldPath: spec.providerConfigRef.name
+            ---
+            apiVersion: s3.aws.upbound.io/v1beta1
+            kind: BucketPublicAccessBlock
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: s3-public-access-block
+            spec:
+              deletionPolicy: {{ $p.deletionPolicy }}
+              forProvider:
+                region: {{ $region }}
+                bucket: {{ $bucketName }}
+                blockPublicAcls: true
+                blockPublicPolicy: true
+                ignorePublicAcls: true
+                restrictPublicBuckets: true
+              providerConfigRef:
+                name: {{ $p.providerConfigRefName }}
 
-          # Secret Kubernetes consumido pela app com o nome do bucket
-          - name: s3-connection-secret
-            base:
-              apiVersion: kubernetes.crossplane.io/v1alpha2
-              kind: Object
-              spec:
-                forProvider:
-                  manifest:
-                    apiVersion: v1
-                    kind: Secret
-                    metadata:
-                      name: ""
-                      namespace: app
-                    type: Opaque
-                    stringData:
-                      bucketName: ""
-                providerConfigRef:
-                  name: default-kubernetes
-            patches:
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.namespace
-                toFieldPath: spec.forProvider.manifest.metadata.namespace
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.s3ConnectionSecretName
-                toFieldPath: spec.forProvider.manifest.metadata.name
-              - type: CombineFromEnvironment
-                toFieldPath: spec.forProvider.manifest.stringData.bucketName
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "api-storage-%s-%s"
-                  variables:
-                    - fromFieldPath: region
-                    - fromFieldPath: accountId
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.kubernetesProviderConfigRefName
-                toFieldPath: spec.providerConfigRef.name
+            ---
+            apiVersion: s3.aws.upbound.io/v1beta2
+            kind: BucketServerSideEncryptionConfiguration
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: s3-encryption
+            spec:
+              deletionPolicy: {{ $p.deletionPolicy }}
+              forProvider:
+                region: {{ $region }}
+                bucket: {{ $bucketName }}
+                rule:
+                  - applyServerSideEncryptionByDefault:
+                      sseAlgorithm: AES256
+              providerConfigRef:
+                name: {{ $p.providerConfigRefName }}
 
-          # Policy IAM para acesso ao bucket (List/Get/Put/Delete)
-          - name: irsa-policy
-            base:
-              apiVersion: iam.aws.upbound.io/v1beta1
-              kind: Policy
-              metadata:
-                annotations:
-                  crossplane.io/external-name: ""
-              spec:
-                deletionPolicy: Orphan
-                forProvider:
-                  description: S3 access policy for app workload
-                  path: /
-                  policy: "{}"
-                  tags: {}
-                providerConfigRef:
-                  name: default
-            patches:
-              - type: CombineFromComposite
-                toFieldPath: metadata.annotations[crossplane.io/external-name]
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "%s-irsa-policy"
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-              - type: CombineFromEnvironment
-                toFieldPath: spec.forProvider.policy
-                combine:
-                  strategy: string
-                  string:
-                    fmt: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:ListBucket"],"Resource":["arn:aws:s3:::api-storage-%s-%s"]},{"Effect":"Allow","Action":["s3:GetObject","s3:PutObject","s3:DeleteObject"],"Resource":["arn:aws:s3:::api-storage-%s-%s/*"]}]}'
-                  variables:
-                    - fromFieldPath: region
-                    - fromFieldPath: accountId
-                    - fromFieldPath: region
-                    - fromFieldPath: accountId
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.tags
-                toFieldPath: spec.forProvider.tags
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.deletionPolicy
-                toFieldPath: spec.deletionPolicy
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.providerConfigRefName
-                toFieldPath: spec.providerConfigRef.name
-              - type: ToCompositeFieldPath
-                fromFieldPath: status.atProvider.arn
-                toFieldPath: status.irsaPolicyArn
+            ---
+            apiVersion: s3.aws.upbound.io/v1beta2
+            kind: BucketVersioning
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: s3-versioning
+            spec:
+              deletionPolicy: {{ $p.deletionPolicy }}
+              forProvider:
+                region: {{ $region }}
+                bucket: {{ $bucketName }}
+                versioningConfiguration:
+                  status: Enabled
+              providerConfigRef:
+                name: {{ $p.providerConfigRefName }}
 
-          # Role IAM assumida pelo ServiceAccount via IRSA
-          - name: irsa-role
-            base:
-              apiVersion: iam.aws.upbound.io/v1beta1
-              kind: Role
-              metadata:
-                annotations:
-                  crossplane.io/external-name: ""
-              spec:
-                deletionPolicy: Orphan
-                forProvider:
-                  assumeRolePolicy: "{}"
-                  tags: {}
-                providerConfigRef:
-                  name: default
-            patches:
-              - type: ToEnvironmentFieldPath
-                fromFieldPath: spec.parameters.namespace
-                toFieldPath: namespace
-              - type: ToEnvironmentFieldPath
-                fromFieldPath: spec.parameters.serviceAccountName
-                toFieldPath: serviceAccountName
-              - type: CombineFromComposite
-                toFieldPath: metadata.annotations[crossplane.io/external-name]
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "%s-irsa"
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-              - type: CombineFromEnvironment
-                toFieldPath: spec.forProvider.assumeRolePolicy
-                combine:
-                  strategy: string
-                  string:
-                    fmt: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Federated":"%s"},"Action":"sts:AssumeRoleWithWebIdentity","Condition":{"StringEquals":{"%s:aud":"sts.amazonaws.com","%s:sub":"system:serviceaccount:%s:%s"}}}]}'
-                  variables:
-                    - fromFieldPath: oidcProviderArn
-                    - fromFieldPath: oidcIssuerHostpath
-                    - fromFieldPath: oidcIssuerHostpath
-                    - fromFieldPath: namespace
-                    - fromFieldPath: serviceAccountName
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.tags
-                toFieldPath: spec.forProvider.tags
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.deletionPolicy
-                toFieldPath: spec.deletionPolicy
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.providerConfigRefName
-                toFieldPath: spec.providerConfigRef.name
-              - type: ToCompositeFieldPath
-                fromFieldPath: status.atProvider.arn
-                toFieldPath: status.roleArn
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: s3-connection-secret
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: Secret
+                  metadata:
+                    name: {{ $p.s3ConnectionSecretName }}
+                    namespace: {{ $p.namespace }}
+                  type: Opaque
+                  stringData:
+                    bucketName: {{ $bucketName }}
+              providerConfigRef:
+                name: {{ $p.kubernetesProviderConfigRefName }}
 
-          # Anexa a policy criada na role IRSA
-          - name: irsa-role-policy-attachment
-            base:
-              apiVersion: iam.aws.upbound.io/v1beta1
-              kind: RolePolicyAttachment
-              spec:
-                deletionPolicy: Orphan
-                forProvider:
-                  role: ""
-                  policyArn: ""
-                providerConfigRef:
-                  name: default
-            patches:
-              - type: CombineFromComposite
-                toFieldPath: spec.forProvider.role
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "%s-irsa"
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-              - type: FromCompositeFieldPath
-                fromFieldPath: status.irsaPolicyArn
-                toFieldPath: spec.forProvider.policyArn
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.deletionPolicy
-                toFieldPath: spec.deletionPolicy
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.providerConfigRefName
-                toFieldPath: spec.providerConfigRef.name
+            ---
+            apiVersion: iam.aws.upbound.io/v1beta1
+            kind: Policy
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: irsa-policy
+                crossplane.io/external-name: {{ printf "%s-irsa-policy" $p.name }}
+            spec:
+              deletionPolicy: {{ $p.deletionPolicy }}
+              forProvider:
+                description: S3 access policy for app workload
+                path: /
+                policy: |
+                  {"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:ListBucket"],"Resource":["arn:aws:s3:::{{ $bucketName }}"]},{"Effect":"Allow","Action":["s3:GetObject","s3:PutObject","s3:DeleteObject"],"Resource":["arn:aws:s3:::{{ $bucketName }}/*"]}]}
+                tags:
+            {{ toYaml $p.tags | indent 6 }}
+              providerConfigRef:
+                name: {{ $p.providerConfigRefName }}
 
-          # ServiceAccount da aplicação já anotada com role-arn
-          - name: app-service-account
-            base:
-              apiVersion: kubernetes.crossplane.io/v1alpha2
-              kind: Object
-              spec:
-                forProvider:
-                  manifest:
-                    apiVersion: v1
-                    kind: ServiceAccount
-                    metadata:
-                      name: api-carro
-                      namespace: app
-                      annotations:
-                        eks.amazonaws.com/role-arn: ""
-                providerConfigRef:
-                  name: default-kubernetes
-            patches:
-              - type: ToEnvironmentFieldPath
-                fromFieldPath: spec.parameters.name
-                toFieldPath: name
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.serviceAccountName
-                toFieldPath: spec.forProvider.manifest.metadata.name
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.namespace
-                toFieldPath: spec.forProvider.manifest.metadata.namespace
-              - type: CombineFromEnvironment
-                toFieldPath: spec.forProvider.manifest.metadata.annotations[eks.amazonaws.com/role-arn]
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "arn:aws:iam::%s:role/%s-irsa"
-                  variables:
-                    - fromFieldPath: accountId
-                    - fromFieldPath: name
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.kubernetesProviderConfigRefName
-                toFieldPath: spec.providerConfigRef.name
+            ---
+            apiVersion: iam.aws.upbound.io/v1beta1
+            kind: Role
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: irsa-role
+                crossplane.io/external-name: {{ printf "%s-irsa" $p.name }}
+            spec:
+              deletionPolicy: {{ $p.deletionPolicy }}
+              forProvider:
+                assumeRolePolicy: |
+                  {"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Federated":"{{ $oidcProviderArn }}"},"Action":"sts:AssumeRoleWithWebIdentity","Condition":{"StringEquals":{"{{ $oidcIssuerHostpath }}:aud":"sts.amazonaws.com","{{ $oidcIssuerHostpath }}:sub":"system:serviceaccount:{{ $p.namespace }}:{{ $p.serviceAccountName }}"}}}]}
+                tags:
+            {{ toYaml $p.tags | indent 6 }}
+              providerConfigRef:
+                name: {{ $p.providerConfigRefName }}
 
-          # Security Group dedicado para o banco
-          - name: db-security-group
-            base:
-              apiVersion: ec2.aws.upbound.io/v1beta1
-              kind: SecurityGroup
-              spec:
-                deletionPolicy: Orphan
-                forProvider:
-                  description: Security group for app database
-                  name: ""
-                  region: us-east-1
-                  vpcId: ""
-                  tags: {}
-                providerConfigRef:
-                  name: default
-            patches:
-              - type: CombineFromComposite
-                toFieldPath: spec.forProvider.name
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "%s-db-sg"
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-              - type: CombineFromEnvironment
-                toFieldPath: spec.forProvider.vpcId
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "%s"
-                  variables:
-                    - fromFieldPath: vpcId
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.region
-                toFieldPath: spec.forProvider.region
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.tags
-                toFieldPath: spec.forProvider.tags
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.deletionPolicy
-                toFieldPath: spec.deletionPolicy
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.providerConfigRefName
-                toFieldPath: spec.providerConfigRef.name
-              - type: ToCompositeFieldPath
-                fromFieldPath: status.atProvider.id
-                toFieldPath: status.dbSecurityGroupId
+            ---
+            apiVersion: iam.aws.upbound.io/v1beta1
+            kind: RolePolicyAttachment
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: irsa-role-policy-attachment
+            spec:
+              deletionPolicy: {{ $p.deletionPolicy }}
+              forProvider:
+                role: {{ printf "%s-irsa" $p.name }}
+                policyArnSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    gotemplating.fn.crossplane.io/composition-resource-name: irsa-policy
+              providerConfigRef:
+                name: {{ $p.providerConfigRefName }}
+            {{- end }}
 
-          # Regra de ingress do SG (porta do banco a partir da VPC do cluster)
-          - name: db-security-group-ingress
-            base:
-              apiVersion: ec2.aws.upbound.io/v1beta1
-              kind: SecurityGroupRule
-              spec:
-                deletionPolicy: Orphan
-                forProvider:
-                  region: us-east-1
-                  type: ingress
-                  protocol: tcp
-                  fromPort: 5432
-                  toPort: 5432
-                  cidrBlocks:
-                    - ""
-                  securityGroupId: ""
-                providerConfigRef:
-                  name: default
-            patches:
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.region
-                toFieldPath: spec.forProvider.region
-              - type: FromCompositeFieldPath
-                fromFieldPath: status.dbSecurityGroupId
-                toFieldPath: spec.forProvider.securityGroupId
-              - type: CombineFromEnvironment
-                toFieldPath: spec.forProvider.cidrBlocks[0]
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "%s"
-                  variables:
-                    - fromFieldPath: vpcCidrBlock
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.deletionPolicy
-                toFieldPath: spec.deletionPolicy
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.providerConfigRefName
-                toFieldPath: spec.providerConfigRef.name
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: app-service-account
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: ServiceAccount
+                  metadata:
+                    name: {{ $p.serviceAccountName }}
+                    namespace: {{ $p.namespace }}
+                    annotations:
+            {{- if $enableS3 }}
+                      eks.amazonaws.com/role-arn: {{ printf "arn:aws:iam::%s:role/%s-irsa" $accountId $p.name }}
+            {{- else }}
+                      {}
+            {{- end }}
+              providerConfigRef:
+                name: {{ $p.kubernetesProviderConfigRefName }}
 
-          # Instância RDS e publicação do secret de conexão no namespace da app
-          - name: db-instance
-            base:
-              apiVersion: rds.aws.upbound.io/v1beta1
-              kind: Instance
-              metadata:
-                annotations:
-                  crossplane.io/external-name: ""
-              spec:
-                deletionPolicy: Orphan
-                writeConnectionSecretToRef:
-                  namespace: app
-                  name: ""
-                forProvider:
-                  allocatedStorage: 20
-                  engine: postgres
-                  engineVersion: "16"
-                  instanceClass: db.t3.micro
-                  dbName: garagem
-                  username: appuser
-                  publiclyAccessible: false
-                  skipFinalSnapshot: true
-                  autoMinorVersionUpgrade: true
-                  manageMasterUserPassword: true
-                  vpcSecurityGroupIds: []
-                  region: us-east-1
-                  tags: {}
-                providerConfigRef:
-                  name: default
-            patches:
-              - type: CombineFromComposite
-                toFieldPath: metadata.annotations[crossplane.io/external-name]
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "%s-db"
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.region
-                toFieldPath: spec.forProvider.region
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.dbEngine
-                toFieldPath: spec.forProvider.engine
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.dbEngineVersion
-                toFieldPath: spec.forProvider.engineVersion
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.dbInstanceClass
-                toFieldPath: spec.forProvider.instanceClass
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.dbAllocatedStorage
-                toFieldPath: spec.forProvider.allocatedStorage
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.dbName
-                toFieldPath: spec.forProvider.dbName
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.dbUsername
-                toFieldPath: spec.forProvider.username
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.dbConnectionSecretName
-                toFieldPath: spec.writeConnectionSecretToRef.name
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.namespace
-                toFieldPath: spec.writeConnectionSecretToRef.namespace
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.dbPubliclyAccessible
-                toFieldPath: spec.forProvider.publiclyAccessible
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.dbSkipFinalSnapshot
-                toFieldPath: spec.forProvider.skipFinalSnapshot
-              - type: FromCompositeFieldPath
-                fromFieldPath: status.dbSecurityGroupId
-                toFieldPath: spec.forProvider.vpcSecurityGroupIds[0]
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.tags
-                toFieldPath: spec.forProvider.tags
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.deletionPolicy
-                toFieldPath: spec.deletionPolicy
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.providerConfigRefName
-                toFieldPath: spec.providerConfigRef.name
-              - type: ToCompositeFieldPath
-                fromFieldPath: status.atProvider.address
-                toFieldPath: status.dbEndpoint
-              - type: ToCompositeFieldPath
-                fromFieldPath: status.atProvider.port
-                toFieldPath: status.dbPort
-              - type: ToCompositeFieldPath
-                fromFieldPath: status.atProvider.masterUserSecret[0].secretArn
-                toFieldPath: status.dbMasterSecretArn
+            {{- if $enableDB }}
+            ---
+            apiVersion: ec2.aws.upbound.io/v1beta1
+            kind: SecurityGroup
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: db-security-group
+            spec:
+              deletionPolicy: {{ $p.deletionPolicy }}
+              forProvider:
+                description: Security group for app database
+                name: {{ printf "%s-db-sg" $p.name }}
+                region: {{ $region }}
+                vpcId: {{ $vpcId }}
+                tags:
+            {{ toYaml $p.tags | indent 6 }}
+              providerConfigRef:
+                name: {{ $p.providerConfigRefName }}
 
-          # Sincroniza a senha master do RDS (Secrets Manager) para Secret Kubernetes da app
-          - name: db-password-external-secret
-            base:
-              apiVersion: kubernetes.crossplane.io/v1alpha2
-              kind: Object
-              spec:
-                forProvider:
-                  manifest:
-                    apiVersion: external-secrets.io/v1beta1
-                    kind: ExternalSecret
-                    metadata:
-                      name: db-password-sync
-                      namespace: app
-                    spec:
-                      refreshInterval: "1h"
-                      secretStoreRef:
-                        kind: ClusterSecretStore
-                        name: aws-secretsmanager
-                      target:
-                        name: api-garagem-db-auth
-                        creationPolicy: Owner
-                      data:
-                        - secretKey: password
-                          remoteRef:
-                            key: "pending-rds-secret-arn"
-                            property: password
-                providerConfigRef:
-                  name: default-kubernetes
-            patches:
-              - type: CombineFromComposite
-                toFieldPath: spec.forProvider.manifest.metadata.name
-                combine:
-                  strategy: string
-                  string:
-                    fmt: "%s-db-password-sync"
-                  variables:
-                    - fromFieldPath: spec.parameters.name
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.namespace
-                toFieldPath: spec.forProvider.manifest.metadata.namespace
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.dbPasswordSecretName
-                toFieldPath: spec.forProvider.manifest.spec.target.name
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.dbPasswordSecretStoreName
-                toFieldPath: spec.forProvider.manifest.spec.secretStoreRef.name
-              - type: FromCompositeFieldPath
-                fromFieldPath: status.dbMasterSecretArn
-                toFieldPath: spec.forProvider.manifest.spec.data[0].remoteRef.key
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.kubernetesProviderConfigRefName
-                toFieldPath: spec.providerConfigRef.name
+            ---
+            apiVersion: ec2.aws.upbound.io/v1beta1
+            kind: SecurityGroupRule
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: db-security-group-ingress
+            spec:
+              deletionPolicy: {{ $p.deletionPolicy }}
+              forProvider:
+                region: {{ $region }}
+                type: ingress
+                protocol: tcp
+                fromPort: 5432
+                toPort: 5432
+                cidrBlocks:
+                  - {{ $vpcCidrBlock }}
+                securityGroupIdSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    gotemplating.fn.crossplane.io/composition-resource-name: db-security-group
+              providerConfigRef:
+                name: {{ $p.providerConfigRefName }}
+
+            ---
+            apiVersion: rds.aws.upbound.io/v1beta1
+            kind: Instance
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: db-instance
+                crossplane.io/external-name: {{ printf "%s-db" $p.name }}
+            spec:
+              deletionPolicy: {{ $p.deletionPolicy }}
+              writeConnectionSecretToRef:
+                namespace: {{ $p.namespace }}
+                name: {{ $p.dbConnectionSecretName }}
+              forProvider:
+                allocatedStorage: {{ $p.dbAllocatedStorage }}
+                engine: {{ $p.dbEngine }}
+                engineVersion: "{{ $p.dbEngineVersion }}"
+                instanceClass: {{ $p.dbInstanceClass }}
+                dbName: {{ $p.dbName }}
+                username: {{ $p.dbUsername }}
+                publiclyAccessible: {{ $p.dbPubliclyAccessible }}
+                skipFinalSnapshot: {{ $p.dbSkipFinalSnapshot }}
+                autoMinorVersionUpgrade: true
+                manageMasterUserPassword: true
+                vpcSecurityGroupIdsSelector:
+                  - matchControllerRef: true
+                    matchLabels:
+                      gotemplating.fn.crossplane.io/composition-resource-name: db-security-group
+                region: {{ $region }}
+                tags:
+            {{ toYaml $p.tags | indent 6 }}
+              providerConfigRef:
+                name: {{ $p.providerConfigRefName }}
+
+            {{- $dbObserved := getComposedResource . "db-instance" -}}
+            {{- if $dbObserved }}
+            {{- $dbSecretArn := dig "resource" "status" "atProvider" "masterUserSecret" 0 "secretArn" "" $dbObserved -}}
+            {{- if ne $dbSecretArn "" }}
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: db-password-external-secret
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: external-secrets.io/v1beta1
+                  kind: ExternalSecret
+                  metadata:
+                    name: {{ printf "%s-db-password-sync" $p.name }}
+                    namespace: {{ $p.namespace }}
+                  spec:
+                    refreshInterval: "1h"
+                    secretStoreRef:
+                      kind: ClusterSecretStore
+                      name: {{ $p.dbPasswordSecretStoreName }}
+                    target:
+                      name: {{ $p.dbPasswordSecretName }}
+                      creationPolicy: Owner
+                    data:
+                      - secretKey: password
+                        remoteRef:
+                          key: {{ $dbSecretArn }}
+                          property: password
+              providerConfigRef:
+                name: {{ $p.kubernetesProviderConfigRefName }}
+            {{- end }}
+            {{- end }}
+            {{- end }}

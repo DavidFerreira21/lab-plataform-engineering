@@ -6,6 +6,8 @@ crossplane-python-app-infra:
     providerConfigRefName: default
     kubernetesProviderConfigRefName: default-kubernetes
     deletionPolicy: Orphan
+    enableS3: true
+    enableDatabase: true
 
     serviceAccountName: api-carro
 

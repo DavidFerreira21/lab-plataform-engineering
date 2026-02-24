@@ -46,6 +46,12 @@ spec:
                       enum:
                         - Orphan
                         - Delete
+                    enableS3:
+                      type: boolean
+                      default: true
+                    enableDatabase:
+                      type: boolean
+                      default: true
                     serviceAccountName:
                       type: string
                       default: api-carro
@@ -94,7 +100,6 @@ spec:
                         type: string
                   required:
                     - name
-                    - dbPasswordSecretName
               required:
                 - parameters
             status:

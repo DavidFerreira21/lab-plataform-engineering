@@ -17,6 +17,8 @@ spec:
     providerConfigRefName: {{ .Values.infra.providerConfigRefName | quote }}
     kubernetesProviderConfigRefName: {{ .Values.infra.kubernetesProviderConfigRefName | quote }}
     deletionPolicy: {{ .Values.infra.deletionPolicy | quote }}
+    enableS3: {{ .Values.infra.enableS3 }}
+    enableDatabase: {{ .Values.infra.enableDatabase }}
     # ServiceAccount da app que receberá annotation IRSA
     serviceAccountName: {{ .Values.infra.serviceAccountName | quote }}
     # Secrets de saída consumidos pela aplicação

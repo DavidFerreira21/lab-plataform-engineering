@@ -8,6 +8,8 @@ infra:
   providerConfigRefName: default
   kubernetesProviderConfigRefName: default-kubernetes
   deletionPolicy: Orphan
+  enableS3: true
+  enableDatabase: true
 
   # ServiceAccount do workload (annotation IRSA será gerada pela composition).
   serviceAccountName: api-carro
