@@ -1,12 +1,6 @@
 data:
   resource.exclusions: |
     - apiGroups:
-      - platform.lab
-      kinds:
-      - XPythonAppInfra
-      clusters:
-      - "*"
-    - apiGroups:
       - s3.aws.upbound.io
       kinds:
       - "*"
