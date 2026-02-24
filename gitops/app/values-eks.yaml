@@ -1,6 +1,6 @@
 app-template:
   serviceAccount:
-    create: false
+    create: true
     name: api-carro
     annotations: {}
   replicaCount: 1

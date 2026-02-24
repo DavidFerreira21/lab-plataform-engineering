@@ -6,7 +6,7 @@ NAMESPACE_ARGO=argocd
 BIN_DIR=/usr/local/bin
 # Regiao fixa do lab
 AWS_REGION:=us-east-1
-TF_STATE_BUCKET?=tfstate-terraform-lab-plataform-engineering-1
+TF_STATE_BUCKET?=tfstate-terraform-lab-plataform-engineering
 TF_BOOTSTRAP_DIR?=plataforma/bootstrap
 PLATFORM?=kind
 EKS_CLUSTER_NAME?=eks-dev
