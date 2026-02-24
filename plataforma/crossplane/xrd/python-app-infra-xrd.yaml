@@ -57,8 +57,10 @@ spec:
                       default: api-garagem-db-conn
                     dbPasswordSecretName:
                       type: string
-                    dbPasswordSecretNamespace:
+                      default: api-garagem-db-auth
+                    dbPasswordSecretStoreName:
                       type: string
+                      default: aws-secretsmanager
                     dbName:
                       type: string
                       default: garagem
@@ -93,7 +95,6 @@ spec:
                   required:
                     - name
                     - dbPasswordSecretName
-                    - dbPasswordSecretNamespace
               required:
                 - parameters
             status:
@@ -110,4 +111,6 @@ spec:
                 dbPort:
                   type: integer
                 dbSecurityGroupId:
+                  type: string
+                dbMasterSecretArn:
                   type: string

@@ -8,7 +8,6 @@ Esta pasta concentra a camada de plataforma do lab: bootstrap do cluster, catalo
 plataforma/
 ├── argo/
 ├── bootstrap/
-├── cluster-metadata/
 ├── crossplane/
 ├── helm-charts/
 ├── kyverno/
@@ -18,7 +17,6 @@ plataforma/
 ## Responsabilidade de cada diretorio
 - `argo/`: AppProject e Applications por ambiente.
 - `bootstrap/`: Terraform para EKS e add-ons base do cluster.
-- `cluster-metadata/`: Helm chart com metadados do cluster consumidos via External Secrets.
 - `crossplane/`: providers, XRDs e compositions dos produtos.
 - `helm-charts/`: chart base de app + chart do contrato unico Crossplane.
 - `kyverno/`: politicas de validacao em modo `Audit`.

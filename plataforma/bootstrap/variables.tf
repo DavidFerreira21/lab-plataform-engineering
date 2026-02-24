@@ -414,19 +414,3 @@ variable "kyverno_chart_version" {
   description = "Pinned Helm chart version for Kyverno"
   default     = "3.3.4"
 }
-
-##############################################
-# SSM Parameter Store (metadados do cluster)
-##############################################
-
-variable "enable_cluster_metadata_ssm" {
-  type        = bool
-  description = "Store cluster metadata in SSM Parameter Store for future IRSA automation"
-  default     = true
-}
-
-variable "cluster_metadata_ssm_prefix" {
-  type        = string
-  description = "Base path prefix for cluster metadata parameters in SSM"
-  default     = "/platform/bootstrap"
-}

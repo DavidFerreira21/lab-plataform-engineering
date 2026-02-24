@@ -40,7 +40,8 @@ Implementacao criada por uma unica instancia:
 - IAM Role/Policy/Attachment para IRSA
 - ServiceAccount anotada com role ARN (via provider-kubernetes)
 - SecurityGroup + SecurityGroupRule para banco
-- RDS PostgreSQL Instance
+- RDS PostgreSQL Instance com senha master gerenciada pela AWS
+- ExternalSecret para sincronizar senha do Secrets Manager para Kubernetes
 - Secret de conexao do S3 e secret de conexao do banco
 
 ## Integracao com workloads
@@ -50,7 +51,7 @@ Contrato no `garagem-infra`:
 Segredos esperados no namespace da app:
 - `api-storage-conn` (bucketName)
 - `api-garagem-db-conn` (host/port/username/database)
-- `api-garagem-db-auth` (password)
+- `api-garagem-db-auth` (password sincronizado do AWS Secrets Manager)
 
 A API em `gitops/app/values-eks.yaml` consome esses secrets por `valueFrom.secretKeyRef`.
 

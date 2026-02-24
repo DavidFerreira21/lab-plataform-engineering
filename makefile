@@ -234,5 +234,4 @@ helm-build: ## Atualiza dependências Helm (apps + contrato unico Python App Inf
 	@helm dependency build gitops/app
 	@helm dependency build gitops/web
 	@helm dependency build gitops/garagem-infra
-	@helm dependency build plataforma/cluster-metadata
 	@echo "✅ Dependências atualizadas."

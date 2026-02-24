@@ -4,6 +4,7 @@
 
 locals {
   oidc_issuer_hostpath = replace(var.cluster_oidc_issuer, "https://", "")
+  has_oidc_provider    = var.oidc_provider_arn != null && var.oidc_provider_arn != ""
 }
 
 data "aws_partition" "current" {}
@@ -13,7 +14,7 @@ data "aws_vpc" "cluster" {
 }
 
 data "aws_iam_policy_document" "crossplane_irsa_trust" {
-  count = var.enable_crossplane_irsa && var.enable_eks_oidc_provider ? 1 : 0
+  count = var.enable_crossplane_irsa && local.has_oidc_provider ? 1 : 0
 
   statement {
     effect  = "Allow"
@@ -43,7 +44,7 @@ data "aws_iam_policy_document" "crossplane_irsa_trust" {
 }
 
 data "aws_iam_policy_document" "external_secrets_irsa_trust" {
-  count = var.enable_external_secrets && var.enable_external_secrets_irsa && var.enable_eks_oidc_provider ? 1 : 0
+  count = var.enable_external_secrets && var.enable_external_secrets_irsa && local.has_oidc_provider ? 1 : 0
 
   statement {
     effect  = "Allow"
@@ -72,7 +73,7 @@ data "aws_iam_policy_document" "external_secrets_ssm_read" {
   count = var.enable_external_secrets && var.enable_external_secrets_irsa ? 1 : 0
 
   statement {
-    sid    = "ReadClusterMetadataParameters"
+    sid    = "ReadParameterStore"
     effect = "Allow"
     actions = [
       "ssm:GetParameter",
@@ -81,7 +82,18 @@ data "aws_iam_policy_document" "external_secrets_ssm_read" {
       "ssm:DescribeParameters"
     ]
     resources = [
-      "arn:${data.aws_partition.current.partition}:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${trim(var.cluster_metadata_ssm_prefix, "/")}/${var.cluster_name}/*"
+      "arn:${data.aws_partition.current.partition}:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/*"
     ]
+  }
+
+  statement {
+    sid    = "ReadSecretsManager"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:ListSecrets"
+    ]
+    resources = ["*"]
   }
 }

@@ -31,7 +31,6 @@ O objetivo e exercitar um fluxo completo de produto de plataforma: bootstrap de 
 ├── plataforma/
 │   ├── argo/
 │   ├── bootstrap/
-│   ├── cluster-metadata/
 │   ├── crossplane/
 │   ├── helm-charts/
 │   ├── kyverno/
@@ -49,7 +48,7 @@ O objetivo e exercitar um fluxo completo de produto de plataforma: bootstrap de 
 - `platform-apps`: API + Web + MinIO.
 
 ### EKS
-- `platform-core`: Crossplane base/xrd/compositions + cluster-metadata + Kyverno.
+- `platform-core`: Crossplane base/xrd/compositions + Kyverno.
 - `garagem-infra`: contrato de infraestrutura da app (`XPythonAppInfra`).
 - `garagem-app`: workloads (`gitops/app` e `gitops/web`).
 

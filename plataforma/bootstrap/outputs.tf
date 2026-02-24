@@ -71,11 +71,6 @@ output "crossplane_release_name" {
   description = "Helm release name for crossplane"
 }
 
-output "cluster_metadata_ssm_base_path" {
-  value       = var.enable_cluster_metadata_ssm ? "/${trim(var.cluster_metadata_ssm_prefix, "/")}/${var.cluster_name}" : null
-  description = "Base SSM path used to store cluster metadata"
-}
-
 output "argocd_release_name" {
   value       = module.addons.argocd_release_name
   description = "Helm release name for Argo CD (when enabled via Terraform)"

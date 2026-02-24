@@ -1,15 +1,3 @@
-# Senha inicial do banco usada pelo RDS (bootstrap). Em produção, preferir secret manager dedicado.
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{ .Values.infra.dbPasswordSecretName }}
-  namespace: {{ .Values.infra.namespace }}
-  annotations:
-    argocd.argoproj.io/sync-wave: "3"
-type: Opaque
-stringData:
-  password: {{ .Values.infra.dbPassword | quote }}
----
 # Instância do contrato único de infraestrutura para uma app Python.
 apiVersion: platform.lab/v1alpha1
 kind: XPythonAppInfra
@@ -34,9 +22,9 @@ spec:
     # Secrets de saída consumidos pela aplicação
     s3ConnectionSecretName: {{ .Values.infra.s3ConnectionSecretName | quote }}
     dbConnectionSecretName: {{ .Values.infra.dbConnectionSecretName | quote }}
-    # Secret de entrada com a senha inicial do banco
+    # Secret de saída com a senha do banco (sincronizada de Secrets Manager via External Secrets)
     dbPasswordSecretName: {{ .Values.infra.dbPasswordSecretName | quote }}
-    dbPasswordSecretNamespace: {{ .Values.infra.dbPasswordSecretNamespace | quote }}
+    dbPasswordSecretStoreName: {{ .Values.infra.dbPasswordSecretStoreName | quote }}
     # Configuração da instância RDS
     dbName: {{ .Values.infra.dbName | quote }}
     dbUsername: {{ .Values.infra.dbUsername | quote }}

@@ -60,7 +60,7 @@ A Web chama a API pela variavel `API_URL`.
 - Values API: `gitops/app/values-eks.yaml`
 - `S3_BUCKET` vem de `api-storage-conn.bucketName` (secret gerado pelo contrato `XPythonAppInfra`)
 - `DB_HOST`/`DB_PORT`/`DB_USER` via `api-garagem-db-conn`
-- `DB_PASSWORD` via `api-garagem-db-auth`
+- `DB_PASSWORD` via `api-garagem-db-auth` (sincronizado do AWS Secrets Manager)
 - ServiceAccount da API e criada/anotada pelo contrato de plataforma `XPythonAppInfra`
 
 ## Executar localmente

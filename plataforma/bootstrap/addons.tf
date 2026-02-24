@@ -10,10 +10,8 @@ module "addons" {
   oidc_provider_arn   = module.eks.oidc_provider_arn
   cluster_vpc_id      = module.eks.vpc_id
 
-  enable_eks_oidc_provider    = var.enable_eks_oidc_provider
-  aws_region                  = var.aws_region
-  tags                        = var.tags
-  cluster_metadata_ssm_prefix = var.cluster_metadata_ssm_prefix
+  aws_region = var.aws_region
+  tags       = var.tags
 
   enable_crossplane                          = var.enable_crossplane
   crossplane_namespace                       = var.crossplane_namespace

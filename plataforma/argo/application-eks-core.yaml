@@ -19,13 +19,6 @@ spec:
       path: plataforma/crossplane/compositions
     - repoURL: "https://github.com/DavidFerreira21/lab-plataform-engineering.git"
       targetRevision: HEAD
-      path: plataforma/cluster-metadata
-      helm:
-        releaseName: platform-cluster-metadata
-        valueFiles:
-          - values.yaml
-    - repoURL: "https://github.com/DavidFerreira21/lab-plataform-engineering.git"
-      targetRevision: HEAD
       path: plataforma/kyverno
   destination:
     server: "https://kubernetes.default.svc"

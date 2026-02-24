@@ -1,6 +1,0 @@
-dependencies:
-- name: external-secrets-ssm-metadata
-  repository: file://../../plataforma/helm-charts/external-secrets-ssm-metadata
-  version: 0.1.0
-digest: sha256:e8394ab5c4b60b60da6e182d76e08204061d927e51e48c0a2e19e071d8ac0e31
-generated: "2026-02-13T20:28:55.838898901-03:00"

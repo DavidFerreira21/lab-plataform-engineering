@@ -15,11 +15,10 @@ infra:
   # Secret de saída para S3 consumido pela API.
   s3ConnectionSecretName: api-storage-conn
 
-  # Secrets de banco (saída de conexão e entrada de senha inicial).
+  # Secrets de banco (saída de conexão e senha sincronizada de Secrets Manager).
   dbConnectionSecretName: api-garagem-db-conn
   dbPasswordSecretName: api-garagem-db-auth
-  dbPasswordSecretNamespace: app
-  dbPassword: "TroqueEssaSenhaNoLab123!"
+  dbPasswordSecretStoreName: aws-secretsmanager
 
   # Parâmetros do RDS.
   dbName: garagem

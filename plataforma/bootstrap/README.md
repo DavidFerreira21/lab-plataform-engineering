@@ -11,7 +11,6 @@ plataforma/bootstrap/
 ├── main-eks.tf
 ├── outputs.tf
 ├── providers.tf
-├── ssm-parameters.tf
 ├── variables.tf
 └── modules/
     ├── eks/
@@ -32,7 +31,7 @@ plataforma/bootstrap/
 ## Pre-requisitos
 - Terraform instalado.
 - AWS CLI autenticado na conta alvo.
-- Permissao para criar IAM, EKS, EC2, SSM e Helm releases via provider Kubernetes.
+- Permissao para criar IAM, EKS, EC2 e Helm releases via provider Kubernetes.
 
 ## Fluxo rapido
 ```bash
@@ -59,13 +58,9 @@ make tf-backend-bootstrap
 ```
 
 ## Metadados de cluster para plataforma
-`ssm-parameters.tf` publica em SSM:
-- account id
-- cluster name/region
-- OIDC issuer e hostpath
-- OIDC provider ARN
-
-Esses dados alimentam o `cluster-metadata` e, no cluster, o `EnvironmentConfig` do Crossplane.
+Os metadados de conta/cluster sao publicados diretamente como `EnvironmentConfig`
+no modulo `addons` (recurso `crossplane_environment_config`), que e a unica
+fonte de verdade consumida pelas Compositions.
 
 ## Observacoes praticas
 - Em EKS deste lab, ArgoCD e instalado via Terraform (`enable_argocd=true`).

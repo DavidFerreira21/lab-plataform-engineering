@@ -26,7 +26,6 @@ Modulo Terraform para instalar add-ons de cluster e integrar IAM/IRSA da platafo
 - `cluster_oidc_issuer`
 - `oidc_provider_arn`
 - `cluster_vpc_id`
-- `enable_eks_oidc_provider`
 - flags `enable_*` dos add-ons
 
 ## EnvironmentConfig publicado
@@ -55,6 +54,7 @@ Esses campos sao consumidos pelas Compositions (ex.: trust policy IRSA e SG/regr
 - `aws_iam_role.external_secrets_irsa`
 - `aws_iam_policy.external_secrets_ssm_read`
 - `aws_iam_role_policy_attachment.external_secrets_irsa_ssm_read`
+- `kubernetes_manifest.external_secrets_cluster_secret_store` (`aws-secretsmanager`)
 
 ### Outros add-ons
 - `helm_release.argocd`

@@ -505,11 +505,8 @@ spec:
                   publiclyAccessible: false
                   skipFinalSnapshot: true
                   autoMinorVersionUpgrade: true
+                  manageMasterUserPassword: true
                   vpcSecurityGroupIds: []
-                  passwordSecretRef:
-                    namespace: app
-                    name: ""
-                    key: password
                   region: us-east-1
                   tags: {}
                 providerConfigRef:
@@ -545,12 +542,6 @@ spec:
                 fromFieldPath: spec.parameters.dbUsername
                 toFieldPath: spec.forProvider.username
               - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.dbPasswordSecretName
-                toFieldPath: spec.forProvider.passwordSecretRef.name
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.parameters.dbPasswordSecretNamespace
-                toFieldPath: spec.forProvider.passwordSecretRef.namespace
-              - type: FromCompositeFieldPath
                 fromFieldPath: spec.parameters.dbConnectionSecretName
                 toFieldPath: spec.writeConnectionSecretToRef.name
               - type: FromCompositeFieldPath
@@ -580,3 +571,59 @@ spec:
               - type: ToCompositeFieldPath
                 fromFieldPath: status.atProvider.port
                 toFieldPath: status.dbPort
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.masterUserSecret[0].secretArn
+                toFieldPath: status.dbMasterSecretArn
+
+          # Sincroniza a senha master do RDS (Secrets Manager) para Secret Kubernetes da app
+          - name: db-password-external-secret
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                forProvider:
+                  manifest:
+                    apiVersion: external-secrets.io/v1beta1
+                    kind: ExternalSecret
+                    metadata:
+                      name: db-password-sync
+                      namespace: app
+                    spec:
+                      refreshInterval: "1h"
+                      secretStoreRef:
+                        kind: ClusterSecretStore
+                        name: aws-secretsmanager
+                      target:
+                        name: api-garagem-db-auth
+                        creationPolicy: Owner
+                      data:
+                        - secretKey: password
+                          remoteRef:
+                            key: "pending-rds-secret-arn"
+                            property: password
+                providerConfigRef:
+                  name: default-kubernetes
+            patches:
+              - type: CombineFromComposite
+                toFieldPath: spec.forProvider.manifest.metadata.name
+                combine:
+                  strategy: string
+                  string:
+                    fmt: "%s-db-password-sync"
+                  variables:
+                    - fromFieldPath: spec.parameters.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.namespace
+                toFieldPath: spec.forProvider.manifest.metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.dbPasswordSecretName
+                toFieldPath: spec.forProvider.manifest.spec.target.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.dbPasswordSecretStoreName
+                toFieldPath: spec.forProvider.manifest.spec.secretStoreRef.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: status.dbMasterSecretArn
+                toFieldPath: spec.forProvider.manifest.spec.data[0].remoteRef.key
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.parameters.kubernetesProviderConfigRefName
+                toFieldPath: spec.providerConfigRef.name

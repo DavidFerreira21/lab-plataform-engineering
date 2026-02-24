@@ -60,7 +60,7 @@ resource "kubernetes_manifest" "crossplane_irsa_serviceaccount" {
 }
 
 resource "kubernetes_manifest" "crossplane_environment_config" {
-  count = var.enable_crossplane && var.enable_eks_oidc_provider ? 1 : 0
+  count = var.enable_crossplane && local.has_oidc_provider ? 1 : 0
 
   manifest = {
     apiVersion = var.crossplane_environment_config_api_version
@@ -141,6 +141,36 @@ resource "helm_release" "external_secrets" {
   ]
 
   depends_on = [aws_iam_role_policy_attachment.external_secrets_irsa_ssm_read]
+}
+
+resource "kubernetes_manifest" "external_secrets_cluster_secret_store" {
+  count = var.enable_external_secrets && var.enable_external_secrets_irsa ? 1 : 0
+
+  manifest = {
+    apiVersion = "external-secrets.io/v1beta1"
+    kind       = "ClusterSecretStore"
+    metadata = {
+      name = "aws-secretsmanager"
+    }
+    spec = {
+      provider = {
+        aws = {
+          service = "SecretsManager"
+          region  = var.aws_region
+          auth = {
+            jwt = {
+              serviceAccountRef = {
+                name      = var.external_secrets_irsa_service_account
+                namespace = var.external_secrets_namespace
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [helm_release.external_secrets]
 }
 
 ##############################################

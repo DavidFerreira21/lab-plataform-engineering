@@ -19,11 +19,6 @@ variable "cluster_vpc_id" {
   description = "VPC ID where EKS cluster is running"
 }
 
-variable "enable_eks_oidc_provider" {
-  type        = bool
-  description = "Whether EKS OIDC provider is enabled"
-}
-
 variable "aws_region" {
   type        = string
   description = "AWS region"
@@ -33,11 +28,6 @@ variable "tags" {
   type        = map(string)
   description = "Tags applied to addon-managed IAM resources"
   default     = {}
-}
-
-variable "cluster_metadata_ssm_prefix" {
-  type        = string
-  description = "Base path prefix for cluster metadata parameters in SSM"
 }
 
 variable "enable_crossplane" {

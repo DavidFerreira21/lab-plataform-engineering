@@ -13,8 +13,7 @@ crossplane-python-app-infra:
 
     dbConnectionSecretName: api-garagem-db-conn
     dbPasswordSecretName: api-garagem-db-auth
-    dbPasswordSecretNamespace: app
-    dbPassword: "TroqueEssaSenhaNoLab123!"
+    dbPasswordSecretStoreName: aws-secretsmanager
     dbName: garagem
     dbUsername: appuser
     dbEngine: postgres
