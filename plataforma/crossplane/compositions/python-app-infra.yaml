@@ -284,10 +284,10 @@ spec:
                 skipFinalSnapshot: {{ $p.dbSkipFinalSnapshot }}
                 autoMinorVersionUpgrade: true
                 manageMasterUserPassword: true
-                vpcSecurityGroupIdsSelector:
-                  - matchControllerRef: true
-                    matchLabels:
-                      gotemplating.fn.crossplane.io/composition-resource-name: db-security-group
+                vpcSecurityGroupIdSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    gotemplating.fn.crossplane.io/composition-resource-name: db-security-group
                 region: {{ $region }}
                 tags:
             {{ toYaml $p.tags | indent 6 }}
