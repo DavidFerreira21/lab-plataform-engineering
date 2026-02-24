@@ -11,7 +11,7 @@ O objetivo e exercitar um fluxo completo de produto de plataforma: bootstrap de 
 
 ## Arquitetura em camadas
 - `app/`: codigo das aplicacoes (`api` FastAPI e `web` Flask).
-- `gitops/`: charts e values de deploy das apps e claims.
+- `gitops/`: charts e values de deploy das apps e do contrato unico de infra.
 - `plataforma/bootstrap/`: Terraform para EKS e add-ons do cluster.
 - `plataforma/crossplane/`: XRDs, Compositions e providers.
 - `plataforma/argo/`: Applications e AppProject do ArgoCD.
@@ -27,7 +27,7 @@ O objetivo e exercitar um fluxo completo de produto de plataforma: bootstrap de 
 ├── gitops/
 │   ├── app/
 │   ├── web/
-│   └── storage-s3/
+│   └── garagem-infra/
 ├── plataforma/
 │   ├── argo/
 │   ├── bootstrap/
@@ -42,7 +42,7 @@ O objetivo e exercitar um fluxo completo de produto de plataforma: bootstrap de 
 
 ## Ambientes suportados
 - `kind` (local): apps + MinIO + ArgoCD.
-- `eks` (AWS): bootstrap via Terraform, Crossplane (S3/IRSA/RDS), apps via ArgoCD.
+- `eks` (AWS): bootstrap via Terraform, Crossplane (contrato unico `XPythonAppInfra`), apps via ArgoCD.
 
 ## ArgoCD por ambiente
 ### Kind
@@ -50,7 +50,7 @@ O objetivo e exercitar um fluxo completo de produto de plataforma: bootstrap de 
 
 ### EKS
 - `platform-core`: Crossplane base/xrd/compositions + cluster-metadata + Kyverno.
-- `garagem-infra`: claims de infraestrutura (`S3`, `IRSA`, `RDS`).
+- `garagem-infra`: contrato de infraestrutura da app (`XPythonAppInfra`).
 - `garagem-app`: workloads (`gitops/app` e `gitops/web`).
 
 Separar `core`, `infra` e `app` facilita troubleshooting e reduz acoplamento de sync.
@@ -78,7 +78,7 @@ make all-eks
 1. Terraform cria/atualiza o cluster (`module.eks`).
 2. Terraform instala add-ons (`module.addons`): Crossplane, External Secrets, ArgoCD, ingress-nginx, Kyverno (por flags).
 3. Argo aplica `platform-core`, `garagem-infra`, `garagem-app`.
-4. Claims Crossplane provisionam recursos e secrets de conexao.
+4. O contrato `XPythonAppInfra` provisiona recursos e secrets de conexao.
 5. API consome secrets (S3 e RDS) sem resolver nomes dinamicamente em runtime.
 
 ## Boas praticas do lab

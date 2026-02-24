@@ -3,9 +3,7 @@ data:
     - apiGroups:
       - platform.lab
       kinds:
-      - XS3
-      - XIRSA
-      - XRDS
+      - XPythonAppInfra
       clusters:
       - "*"
     - apiGroups:
@@ -22,6 +20,18 @@ data:
       - "*"
     - apiGroups:
       - rds.aws.upbound.io
+      kinds:
+      - "*"
+      clusters:
+      - "*"
+    - apiGroups:
+      - ec2.aws.upbound.io
+      kinds:
+      - "*"
+      clusters:
+      - "*"
+    - apiGroups:
+      - kubernetes.crossplane.io
       kinds:
       - "*"
       clusters:

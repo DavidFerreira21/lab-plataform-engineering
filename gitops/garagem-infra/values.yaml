@@ -1,0 +1,29 @@
+crossplane-python-app-infra:
+  infra:
+    name: api-garagem
+    namespace: app
+    region: us-east-1
+    providerConfigRefName: default
+    kubernetesProviderConfigRefName: default-kubernetes
+    deletionPolicy: Orphan
+
+    serviceAccountName: api-carro
+
+    s3ConnectionSecretName: api-storage-conn
+
+    dbConnectionSecretName: api-garagem-db-conn
+    dbPasswordSecretName: api-garagem-db-auth
+    dbPasswordSecretNamespace: app
+    dbPassword: "TroqueEssaSenhaNoLab123!"
+    dbName: garagem
+    dbUsername: appuser
+    dbEngine: postgres
+    dbEngineVersion: "16"
+    dbInstanceClass: db.t3.micro
+    dbAllocatedStorage: 20
+    dbPubliclyAccessible: false
+    dbSkipFinalSnapshot: true
+
+    tags:
+      owner: api
+      environment: eks

@@ -1,0 +1,37 @@
+infra:
+  # Identificação lógica da app usada para nomear recursos de infra.
+  name: api-garagem
+  namespace: app
+  region: us-east-1
+
+  # Providers usados pelo Crossplane para criar recursos AWS e objetos Kubernetes.
+  providerConfigRefName: default
+  kubernetesProviderConfigRefName: default-kubernetes
+  deletionPolicy: Orphan
+
+  # ServiceAccount do workload (annotation IRSA será gerada pela composition).
+  serviceAccountName: api-carro
+
+  # Secret de saída para S3 consumido pela API.
+  s3ConnectionSecretName: api-storage-conn
+
+  # Secrets de banco (saída de conexão e entrada de senha inicial).
+  dbConnectionSecretName: api-garagem-db-conn
+  dbPasswordSecretName: api-garagem-db-auth
+  dbPasswordSecretNamespace: app
+  dbPassword: "TroqueEssaSenhaNoLab123!"
+
+  # Parâmetros do RDS.
+  dbName: garagem
+  dbUsername: appuser
+  dbEngine: postgres
+  dbEngineVersion: "16"
+  dbInstanceClass: db.t3.micro
+  dbAllocatedStorage: 20
+  dbPubliclyAccessible: false
+  dbSkipFinalSnapshot: true
+
+  # Tags padrão aplicadas nos recursos AWS.
+  tags:
+    owner: api
+    environment: eks

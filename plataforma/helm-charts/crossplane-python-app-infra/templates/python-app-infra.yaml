@@ -1,0 +1,50 @@
+# Senha inicial do banco usada pelo RDS (bootstrap). Em produção, preferir secret manager dedicado.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.infra.dbPasswordSecretName }}
+  namespace: {{ .Values.infra.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+type: Opaque
+stringData:
+  password: {{ .Values.infra.dbPassword | quote }}
+---
+# Instância do contrato único de infraestrutura para uma app Python.
+apiVersion: platform.lab/v1alpha1
+kind: XPythonAppInfra
+metadata:
+  name: {{ .Values.infra.name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
+spec:
+  parameters:
+    # Identidade da aplicação e namespace alvo dos recursos Kubernetes (SA/secrets)
+    name: {{ .Values.infra.name | quote }}
+    namespace: {{ .Values.infra.namespace | quote }}
+    region: {{ .Values.infra.region | quote }}
+    # ProviderConfig AWS e Kubernetes usados pela composition
+    providerConfigRefName: {{ .Values.infra.providerConfigRefName | quote }}
+    kubernetesProviderConfigRefName: {{ .Values.infra.kubernetesProviderConfigRefName | quote }}
+    deletionPolicy: {{ .Values.infra.deletionPolicy | quote }}
+    # ServiceAccount da app que receberá annotation IRSA
+    serviceAccountName: {{ .Values.infra.serviceAccountName | quote }}
+    # Secrets de saída consumidos pela aplicação
+    s3ConnectionSecretName: {{ .Values.infra.s3ConnectionSecretName | quote }}
+    dbConnectionSecretName: {{ .Values.infra.dbConnectionSecretName | quote }}
+    # Secret de entrada com a senha inicial do banco
+    dbPasswordSecretName: {{ .Values.infra.dbPasswordSecretName | quote }}
+    dbPasswordSecretNamespace: {{ .Values.infra.dbPasswordSecretNamespace | quote }}
+    # Configuração da instância RDS
+    dbName: {{ .Values.infra.dbName | quote }}
+    dbUsername: {{ .Values.infra.dbUsername | quote }}
+    dbEngine: {{ .Values.infra.dbEngine | quote }}
+    dbEngineVersion: {{ .Values.infra.dbEngineVersion | quote }}
+    dbInstanceClass: {{ .Values.infra.dbInstanceClass | quote }}
+    dbAllocatedStorage: {{ .Values.infra.dbAllocatedStorage }}
+    dbPubliclyAccessible: {{ .Values.infra.dbPubliclyAccessible }}
+    dbSkipFinalSnapshot: {{ .Values.infra.dbSkipFinalSnapshot }}
+    tags:
+{{- toYaml .Values.infra.tags | nindent 6 }}

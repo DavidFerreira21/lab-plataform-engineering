@@ -1,0 +1,10 @@
+apiVersion: v2
+name: garagem-infra
+description: GitOps instance of the unified Python app infrastructure contract
+type: application
+version: 0.1.0
+appVersion: "1.0"
+dependencies:
+  - name: crossplane-python-app-infra
+    version: "0.1.0"
+    repository: "file://../../plataforma/helm-charts/crossplane-python-app-infra"

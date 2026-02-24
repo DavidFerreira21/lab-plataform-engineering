@@ -1,0 +1,6 @@
+dependencies:
+- name: crossplane-python-app-infra
+  repository: file://../../plataforma/helm-charts/crossplane-python-app-infra
+  version: 0.1.0
+digest: sha256:66c75f9cb0a1a97f601bda443b0ff7b714f858869ba2f0ee907de26299c027f1
+generated: "2026-02-23T21:51:09.561179129-03:00"

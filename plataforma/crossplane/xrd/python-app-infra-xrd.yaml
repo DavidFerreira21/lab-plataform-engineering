@@ -1,0 +1,113 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xpythonappinfras.platform.lab
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  group: platform.lab
+  names:
+    kind: XPythonAppInfra
+    plural: xpythonappinfras
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      minLength: 3
+                      maxLength: 32
+                      pattern: "^[a-z][a-z0-9-]*$"
+                    namespace:
+                      type: string
+                      default: app
+                    region:
+                      type: string
+                      default: us-east-1
+                    providerConfigRefName:
+                      type: string
+                      default: default
+                    kubernetesProviderConfigRefName:
+                      type: string
+                      default: default-kubernetes
+                    deletionPolicy:
+                      type: string
+                      default: Orphan
+                      enum:
+                        - Orphan
+                        - Delete
+                    serviceAccountName:
+                      type: string
+                      default: api-carro
+                    s3ConnectionSecretName:
+                      type: string
+                      default: api-storage-conn
+                    dbConnectionSecretName:
+                      type: string
+                      default: api-garagem-db-conn
+                    dbPasswordSecretName:
+                      type: string
+                    dbPasswordSecretNamespace:
+                      type: string
+                    dbName:
+                      type: string
+                      default: garagem
+                    dbUsername:
+                      type: string
+                      default: appuser
+                    dbEngine:
+                      type: string
+                      default: postgres
+                      enum:
+                        - postgres
+                    dbEngineVersion:
+                      type: string
+                      default: "16"
+                    dbInstanceClass:
+                      type: string
+                      default: db.t3.micro
+                    dbAllocatedStorage:
+                      type: integer
+                      default: 20
+                      minimum: 20
+                    dbPubliclyAccessible:
+                      type: boolean
+                      default: false
+                    dbSkipFinalSnapshot:
+                      type: boolean
+                      default: true
+                    tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                  required:
+                    - name
+                    - dbPasswordSecretName
+                    - dbPasswordSecretNamespace
+              required:
+                - parameters
+            status:
+              type: object
+              properties:
+                bucketName:
+                  type: string
+                roleArn:
+                  type: string
+                irsaPolicyArn:
+                  type: string
+                dbEndpoint:
+                  type: string
+                dbPort:
+                  type: integer
+                dbSecurityGroupId:
+                  type: string

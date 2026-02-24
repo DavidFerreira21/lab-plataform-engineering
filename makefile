@@ -229,10 +229,10 @@ down-eks: ## Remove o cluster EKS e o node group (AWS CLI)
 	echo "⏳ Aguardando cluster remover..."; \
 	aws eks wait cluster-deleted --region $(AWS_REGION) --name $$EKS_NAME
 
-helm-build: ## Atualiza dependências Helm (apps + claims Crossplane)
+helm-build: ## Atualiza dependências Helm (apps + contrato unico Python App Infra)
 	@echo "⛵ Atualizando dependências Helm..."
 	@helm dependency build gitops/app
 	@helm dependency build gitops/web
-	@helm dependency build gitops/storage-s3
+	@helm dependency build gitops/garagem-infra
 	@helm dependency build plataforma/cluster-metadata
 	@echo "✅ Dependências atualizadas."

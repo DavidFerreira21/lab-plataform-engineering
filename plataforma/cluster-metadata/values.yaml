@@ -11,3 +11,5 @@ external-secrets-ssm-metadata:
     targetSecretName: cluster-aws-metadata
     metadataPrefix: /platform/bootstrap
     clusterName: eks-dev
+  s3BucketSecret:
+    enabled: false

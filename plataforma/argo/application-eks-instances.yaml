@@ -10,9 +10,9 @@ spec:
   sources:
     - repoURL: "https://github.com/DavidFerreira21/lab-plataform-engineering.git"
       targetRevision: HEAD
-      path: gitops/storage-s3
+      path: gitops/garagem-infra
       helm:
-        releaseName: platform-storage-s3
+        releaseName: garagem-infra
         valueFiles:
           - values.yaml
   destination:
