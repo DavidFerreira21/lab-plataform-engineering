@@ -296,7 +296,13 @@ spec:
 
             {{- $dbObserved := getComposedResource . "db-instance" -}}
             {{- if $dbObserved }}
-            {{- $dbSecretArn := dig "resource" "status" "atProvider" "masterUserSecret" 0 "secretArn" "" $dbObserved -}}
+            {{- $dbSecretArn := "" -}}
+            {{- $atProvider := dig "resource" "status" "atProvider" (dict) $dbObserved -}}
+            {{- $masterUserSecret := get $atProvider "masterUserSecret" -}}
+            {{- if and $masterUserSecret (gt (len $masterUserSecret) 0) -}}
+            {{- $firstMasterUserSecret := first $masterUserSecret -}}
+            {{- $dbSecretArn = (get $firstMasterUserSecret "secretArn" | default "") -}}
+            {{- end -}}
             {{- if ne $dbSecretArn "" }}
             ---
             apiVersion: kubernetes.crossplane.io/v1alpha2
