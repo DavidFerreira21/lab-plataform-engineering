@@ -111,6 +111,18 @@ variable "external_secrets_irsa_role_name" {
   description = "IAM role name for external-secrets IRSA"
 }
 
+variable "external_secrets_crd_wait_seconds" {
+  type        = number
+  description = "Seconds to wait after external-secrets Helm install so CRDs are discoverable"
+  default     = 20
+}
+
+variable "external_secrets_raw_chart_version" {
+  type        = string
+  description = "Pinned Helm chart version for bedag/raw used to create ClusterSecretStore after CRDs"
+  default     = "2.0.0"
+}
+
 variable "enable_argocd" {
   type        = bool
   description = "Install Argo CD via Helm"

@@ -143,34 +143,60 @@ resource "helm_release" "external_secrets" {
   depends_on = [aws_iam_role_policy_attachment.external_secrets_irsa_ssm_read]
 }
 
-resource "kubernetes_manifest" "external_secrets_cluster_secret_store" {
+resource "terraform_data" "external_secrets_crd_wait" {
   count = var.enable_external_secrets && var.enable_external_secrets_irsa ? 1 : 0
 
-  manifest = {
-    apiVersion = "external-secrets.io/v1beta1"
-    kind       = "ClusterSecretStore"
-    metadata = {
-      name = "aws-secretsmanager"
-    }
-    spec = {
-      provider = {
-        aws = {
-          service = "SecretsManager"
-          region  = var.aws_region
-          auth = {
-            jwt = {
-              serviceAccountRef = {
-                name      = var.external_secrets_irsa_service_account
-                namespace = var.external_secrets_namespace
+  provisioner "local-exec" {
+    command = "sleep ${var.external_secrets_crd_wait_seconds}"
+  }
+
+  depends_on = [helm_release.external_secrets]
+}
+
+resource "helm_release" "external_secrets_cluster_store" {
+  count = var.enable_external_secrets && var.enable_external_secrets_irsa ? 1 : 0
+
+  name             = "external-secrets-cluster-store"
+  repository       = "https://bedag.github.io/helm-charts/"
+  chart            = "raw"
+  namespace        = var.external_secrets_namespace
+  create_namespace = false
+  version          = var.external_secrets_raw_chart_version
+  atomic           = true
+  cleanup_on_fail  = true
+  timeout          = 600
+
+  values = [
+    yamlencode({
+      resources = [
+        {
+          apiVersion = "external-secrets.io/v1beta1"
+          kind       = "ClusterSecretStore"
+          metadata = {
+            name = "aws-secretsmanager"
+          }
+          spec = {
+            provider = {
+              aws = {
+                service = "SecretsManager"
+                region  = var.aws_region
+                auth = {
+                  jwt = {
+                    serviceAccountRef = {
+                      name      = var.external_secrets_irsa_service_account
+                      namespace = var.external_secrets_namespace
+                    }
+                  }
+                }
               }
             }
           }
         }
-      }
-    }
-  }
+      ]
+    })
+  ]
 
-  depends_on = [helm_release.external_secrets]
+  depends_on = [terraform_data.external_secrets_crd_wait]
 }
 
 ##############################################

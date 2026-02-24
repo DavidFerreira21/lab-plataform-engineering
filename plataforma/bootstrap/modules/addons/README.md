@@ -54,7 +54,8 @@ Esses campos sao consumidos pelas Compositions (ex.: trust policy IRSA e SG/regr
 - `aws_iam_role.external_secrets_irsa`
 - `aws_iam_policy.external_secrets_ssm_read`
 - `aws_iam_role_policy_attachment.external_secrets_irsa_ssm_read`
-- `kubernetes_manifest.external_secrets_cluster_secret_store` (`aws-secretsmanager`)
+- `terraform_data.external_secrets_crd_wait` (barreira de propagacao de CRD)
+- `helm_release.external_secrets_cluster_store` (chart `bedag/raw` com `ClusterSecretStore` `aws-secretsmanager`)
 
 ### Outros add-ons
 - `helm_release.argocd`
