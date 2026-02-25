@@ -1,4 +1,7 @@
 app-template:
+  irsa:
+    enabled: true
+    roleArn: "arn:aws:iam::851725259254:role/api-garagem-irsa"
   serviceAccount:
     create: false
     name: api-carro

@@ -13,15 +13,30 @@ spec:
         app: {{ include "app-template.fullname" . | quote }}
     spec:
 {{- $sa := .Values.serviceAccount | default dict }}
+{{- $irsa := .Values.irsa | default dict }}
 {{- if or $sa.create $sa.name }}
       serviceAccountName: {{ include "app-template.serviceAccountName" . | quote }}
 {{- end }}
       containers:
         - name: {{ .Chart.Name | quote }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
-{{- if .Values.env }}
+{{- if or (and $irsa.enabled $irsa.roleArn) .Values.env }}
           env:
+{{- if and $irsa.enabled $irsa.roleArn }}
+            - name: AWS_ROLE_ARN
+              value: {{ $irsa.roleArn | quote }}
+            - name: AWS_WEB_IDENTITY_TOKEN_FILE
+              value: "/var/run/secrets/eks.amazonaws.com/serviceaccount/token"
+{{- end }}
+{{- if .Values.env }}
 {{ toYaml .Values.env | indent 12 }}
+{{- end }}
+{{- end }}
+{{- if and $irsa.enabled $irsa.roleArn }}
+          volumeMounts:
+            - name: aws-iam-token
+              mountPath: /var/run/secrets/eks.amazonaws.com/serviceaccount
+              readOnly: true
 {{- end }}
           ports:
             - containerPort: {{ .Values.service.targetPort | default .Values.service.port }}
@@ -46,4 +61,14 @@ spec:
             periodSeconds: {{ .Values.probes.liveness.periodSeconds | default 10 }}
             timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds | default 2 }}
             failureThreshold: {{ .Values.probes.liveness.failureThreshold | default 3 }}
+{{- end }}
+{{- if and $irsa.enabled $irsa.roleArn }}
+      volumes:
+        - name: aws-iam-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: sts.amazonaws.com
+                  expirationSeconds: 86400
+                  path: token
 {{- end }}
