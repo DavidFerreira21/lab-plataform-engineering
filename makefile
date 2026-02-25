@@ -160,6 +160,10 @@ install-argo: ## Instalação do ArgoCD
 
 bootstrap-argo: ## Conecta o Argo ao Monorepo
 	@echo "🏗️ Aplicando configurações de GitOps..."
+	@if [ "$(PLATFORM)" = "eks" ]; then \
+		echo "🛠️ Garantindo compatibilidade do pod-identity-webhook (IRSA)..."; \
+		kubectl patch mutatingwebhookconfiguration pod-identity-webhook --type='json' -p='[{"op":"replace","path":"/webhooks/0/admissionReviewVersions","value":["v1","v1beta1"]}]' || true; \
+	fi
 	@kubectl -n $(NAMESPACE_ARGO) patch configmap argocd-cm --type merge --patch-file plataforma/argo/argocd-cm-crossplane-health-patch.yaml
 	@kubectl -n $(NAMESPACE_ARGO) rollout restart statefulset argocd-application-controller || true
 	@kubectl -n $(NAMESPACE_ARGO) rollout status statefulset argocd-application-controller --timeout=300s || true
