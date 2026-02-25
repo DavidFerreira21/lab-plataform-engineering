@@ -24,13 +24,6 @@ data:
       - "*"
       clusters:
       - "*"
-    - apiGroups:
-      - kubernetes.crossplane.io
-      kinds:
-      - "*"
-      clusters:
-      - "*"
-
   resource.customizations.health.pkg.crossplane.io_Provider: |
     hs = {}
 
