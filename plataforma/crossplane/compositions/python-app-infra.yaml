@@ -190,8 +190,6 @@ spec:
                 role: {{ printf "%s-irsa" $p.name }}
                 policyArnSelector:
                   matchControllerRef: true
-                  matchLabels:
-                    gotemplating.fn.crossplane.io/composition-resource-name: irsa-policy
               providerConfigRef:
                 name: {{ $p.providerConfigRefName }}
             {{- end }}
