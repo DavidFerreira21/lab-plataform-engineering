@@ -256,8 +256,6 @@ spec:
                   - {{ $vpcCidrBlock }}
                 securityGroupIdSelector:
                   matchControllerRef: true
-                  matchLabels:
-                    gotemplating.fn.crossplane.io/composition-resource-name: db-security-group
               providerConfigRef:
                 name: {{ $p.providerConfigRefName }}
 
@@ -286,8 +284,6 @@ spec:
                 manageMasterUserPassword: true
                 vpcSecurityGroupIdSelector:
                   matchControllerRef: true
-                  matchLabels:
-                    gotemplating.fn.crossplane.io/composition-resource-name: db-security-group
                 region: {{ $region }}
                 tags:
             {{ toYaml $p.tags | indent 6 }}
