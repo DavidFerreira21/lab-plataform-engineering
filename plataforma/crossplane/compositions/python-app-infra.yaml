@@ -265,13 +265,13 @@ spec:
             metadata:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: db-instance
-                crossplane.io/external-name: {{ printf "%s-db" $p.name }}
             spec:
               deletionPolicy: {{ $p.deletionPolicy }}
               writeConnectionSecretToRef:
                 namespace: {{ $p.namespace }}
                 name: {{ $p.dbConnectionSecretName }}
               forProvider:
+                identifier: {{ printf "%s-db" $p.name }}
                 allocatedStorage: {{ $p.dbAllocatedStorage }}
                 engine: {{ $p.dbEngine }}
                 engineVersion: "{{ $p.dbEngineVersion }}"
@@ -293,11 +293,21 @@ spec:
             {{- $dbObserved := getComposedResource . "db-instance" -}}
             {{- if $dbObserved }}
             {{- $dbSecretArn := "" -}}
-            {{- $atProvider := dig "resource" "status" "atProvider" (dict) $dbObserved -}}
+            {{- $resource := get $dbObserved "resource" -}}
+            {{- if $resource -}}
+            {{- $status := get $resource "status" -}}
+            {{- if $status -}}
+            {{- $atProvider := get $status "atProvider" -}}
+            {{- if $atProvider -}}
             {{- $masterUserSecret := get $atProvider "masterUserSecret" -}}
             {{- if and $masterUserSecret (gt (len $masterUserSecret) 0) -}}
-            {{- $firstMasterUserSecret := first $masterUserSecret -}}
+            {{- $firstMasterUserSecret := index $masterUserSecret 0 -}}
+            {{- if $firstMasterUserSecret -}}
             {{- $dbSecretArn = (get $firstMasterUserSecret "secretArn" | default "") -}}
+            {{- end -}}
+            {{- end -}}
+            {{- end -}}
+            {{- end -}}
             {{- end -}}
             {{- if ne $dbSecretArn "" }}
             ---
